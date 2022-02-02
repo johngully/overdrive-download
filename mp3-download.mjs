@@ -25,7 +25,7 @@ export default class Mp3Download {
     if(!fs.existsSync(odmPath)) {
       throw new Error(`The specified .odm cannot be located: ${odmPath}`);
     }
-    this.config.path = path.dirname(odmPath);
+    this.config.basePath = path.dirname(odmPath);
 
     // Acquire license
     const licensePath = getLicensePath(odmPath);
@@ -38,13 +38,22 @@ export default class Mp3Download {
     const bookMetadata = this.metadata(odmPath);
 
     // Create path
-    const bookPath = this._createPath(this.config.path, bookMetadata)
+    const bookPath = this._createPath(this.config.basePath, bookMetadata)
 
     // Download cover
     const coverResult = await downloadCover(bookMetadata.coverImageUrl, bookPath);
 
     // Download mp3 parts
-    const downloadResult = await downloadParts(odmPath, license, this.config.clientId, bookPath);
+    const downloadResults = await downloadParts(odmPath, license, this.config.clientId, bookPath);
+
+    // Return the path to the book
+    return { 
+      bookPath, 
+      licensePath,
+      odmPath,
+      partCount: downloadResults.length,
+      downloadResults
+    };
   }
 
   metadata(odmPath) {
@@ -69,8 +78,8 @@ export default class Mp3Download {
       this.config.clientId = uuidv4();
     }
 
-    if (!this.config.path) {
-      this.config.path = "./"
+    if (!this.config.basePath) {
+      this.config.basePath = "./"
     }
   
     this.configManager.saveConfig(this.config);

@@ -1,28 +1,21 @@
-import "dotenv/config";
+import Config from "./utils/config.mjs"
 import puppeteer from "puppeteer";
+import path from "path";
 
 export default class OdmDownload {
 
   constructor() {
     this.browser;
     this.page;
-    this.pageConfig = {
-      goto: {
-        waitUntil: "networkidle2"
-      }
-    }
-    this.config = {}
-    this.config.downloadPath = process.env.OVERDRIVE_DOWNLOAD_PATH;
-    this.config.libraryName = process.env.OVERDRIVE_LIBRARY_NAME;
-    this.config.username = process.env.OVERDRIVE_USERNAME;
-    this.config.password = process.env.OVERDRIVE_PASSWORD;
-    this.config.urlBase = "overdrive.com";
-    this.config.url = `https://${this.config.libraryName}.${this.config.urlBase}`;
+    this.pageConfig = { goto: { waitUntil: "networkidle2" } };
+    this.configManager = new Config();
+    this.config = this.configManager.getConfig();
+    this._createDefaultConfig();
   }
 
   async download(title) {
     // console.log("Download starting");
-    let fileName = "";
+    let filePath = "";
 
     // Initialize the browser
     const page = await this._startBrowser();
@@ -32,31 +25,47 @@ export default class OdmDownload {
     if (!isLoggedIn) {
       throw new Error("Login failed", this.config)
     }
-    // console.log("Login success");
 
     // Get download button for the title on loan
     const downloadButton = await this._getTitleOnLoan(title)
 
     // If there is a download, download the file
     if (downloadButton) {
-      // console.log("Title available for download:", title);
-      fileName = await this._downloadOdm(downloadButton);
-      // console.log("Download complete:", fileName);
+      const fileName = await this._downloadOdm(downloadButton);
+      filePath = path.join(this.config.basePath, fileName);
     }
     
     // Stop the browswer and return the file location
     await this._stopBrowser();
-    return fileName;
+    return filePath;
+  }
+
+  _createDefaultConfig() {
+    if (!this.config.basePath) {
+      this.config.basePath = "./"
+    }
+  
+    if (!this.config.urlBase) {
+      this.config.urlBase = "overdrive.com"
+    }
+    this.config.urlBase = "overdrive.com";
+    this.config.url = `https://${this.config.libraryName}.${this.config.urlBase}`;
+
+    this.configManager.saveConfig(this.config);
   }
 
   async _startBrowser() {
-    const headless = true;
+    let headless = true;
+    if (Object.hasOwn(this.config, "headless")) {
+      headless = this.config.headless;
+    }
+    
     this.browser = await puppeteer.launch({ headless });
     this.page = await this.browser.newPage();
 
     // If specified, configure the download path
-    if (this.config.downloadPath) {
-      await this.page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: this.config.downloadPath});
+    if (this.config.basePath) {
+      await this.page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: this.config.basePath});
     }
     
     // Emulate a mobile device so that the download button is displayed
