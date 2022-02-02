@@ -1,2 +1,6 @@
 node_modules
+downloads
 .env
+.overdrive-downloadrc
+*.odm
+*.license
