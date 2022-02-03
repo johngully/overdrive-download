@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node index.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/index.mjs"
   },
   "author": "John Gully",
   "license": "MIT",
