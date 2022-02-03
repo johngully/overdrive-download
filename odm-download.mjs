@@ -14,8 +14,11 @@ export default class OdmDownload {
   }
 
   async download(title) {
-    // console.log("Download starting");
     let filePath = "";
+
+    if (!title) {
+      throw new Error("Title is require but was not present");
+    }
 
     // Initialize the browser
     const page = await this._startBrowser();
@@ -33,6 +36,8 @@ export default class OdmDownload {
     if (downloadButton) {
       const fileName = await this._downloadOdm(downloadButton);
       filePath = path.join(this.config.basePath, fileName);
+    } else {
+      throw new Error(`The title: "${title}" could not be found on the Loans page. Please ensure you have borrowed the title and it is spelled correctly (case sensitive).`)
     }
     
     // Stop the browswer and return the file location
