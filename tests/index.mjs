@@ -1,7 +1,7 @@
 import { default as OverdriveDownload, OdmDownload, Mp3Download } from "../index.mjs";
 import fs from "fs";
 import { exit } from "process";
-const title = "Foo";  // Set this value to test the download of a title that you have on loan
+const title = "";  // Set this value to test the download of a title that you have on loan
 
 if (title === "") {
   console.log("Skipping tests");
