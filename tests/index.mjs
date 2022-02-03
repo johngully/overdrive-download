@@ -5,7 +5,7 @@ const title = "";  // Set this value to test the download of a title that you ha
 
 if (title === "") {
   console.log("Skipping tests");
-  process.exit();
+  process.exit(0);
 }
 
 const od = new OverdriveDownload();
