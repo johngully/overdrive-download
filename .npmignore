@@ -1,2 +1,8 @@
+node_modules
+downloads
+.env
+.*rc
+.vscode
+*.odm
+*.license
 .gitattributes
-.gitignore
