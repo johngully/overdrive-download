@@ -30,6 +30,10 @@ export default class Config {
     const data = config ? config : this.config;
     fs.writeFileSync(this.configFilePath, JSON.stringify(data));
   }
+
+  exists() {
+    return fs.existsSync(this.configFilePath);
+  }
 }
 
 function getConfigFileName(explicitFileName) {
