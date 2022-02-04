@@ -1,5 +1,5 @@
 {
-  "name": "overdrive-download",
+  "name": "overdrivedownload",
   "version": "0.1.0",
   "description": "Download audiobooks from Overdrive",
   "main": "index.mjs",
