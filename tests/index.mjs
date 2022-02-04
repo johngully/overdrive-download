@@ -8,13 +8,13 @@ if (title === "") {
   process.exit(0);
 }
 
-const od = new OverdriveDownload();
+const overdrive = new OverdriveDownload();
 // Download the ODM for the specified title from the library website
-const odmFilePath = await od.odm.download(title);
+const odmFilePath = await overdrive.odm.download(title);
 console.log("ODM file path:", odmFilePath);
 
 // Use the ODM to download the title mp3 files
-const downloadResults = await od.mp3.download(odmFilePath);
+const downloadResults = await overdrive.mp3.download(odmFilePath);
 console.log(`Download of ${downloadResults.partCount} parts complete:`, downloadResults.bookPath)
 
 // Cleanup the ODM and License files once the download has completed

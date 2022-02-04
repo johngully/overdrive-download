@@ -9,7 +9,7 @@ The project provides classes that can be used programatically download the `.odm
 
 ### CLI installation
 ```bash
-npm install -g odm-cli
+npm install -g overdrivedownload
 ```
 Once the CLI has been installed a configuration file needs to be created. A cli command `odm config` has been created to simplify this process. See the [Configuration section of this document](#configuration) for more details on the range of possible configuration values.
 
@@ -49,16 +49,20 @@ To get the `.mp3` files you must provide the path to the `.odm` file for the tit
 
 ## Example
 ```js
-import OdmDownload from "./odm-download.mjs";
-import Mp3Download from "./mp3-download.mjs";
+import OverdriveDownload from "overdrivedownload";
+const overdrive = new OverdriveDownload();
 
-// Download the ODM for the specified title from the library website
-const odm = new OdmDownload();
-const odmFilePath = await odm.download(title);
+// Modify this to match the book title on the 
+// loans page of your library's overdrive website
+const title = "The Old Man and the Sea"; 
+
+// Download the ODM for the specified title
+const odmFilePath = await overdrive.odm.download(title);
+console.log(`".odm" file path:`, odmFilePath);
 
 // Use the ODM to download the title mp3 files
-const mp3 = new Mp3Download();
-const downloadResults = await mp3.download(odmFilePath);
+const downloadResults = await overdrive.mp3.download(odmFilePath);
+console.log(`Download of ${downloadResults.partCount} parts complete:`, downloadResults.bookPath);
 ```
 
 # Configuration
