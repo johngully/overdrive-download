@@ -23,6 +23,7 @@ function _renameFile(filePattern, fileMetadata, bookMetadata) {
   const newFileName = fillTemplate(filePattern, values);
   const newFilePath = path.join(fileMetadata.directoryPath, newFileName)
   fs.renameSync(fileMetadata.filePath, newFilePath);
+  return newFilePath;
 }
 
 function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
@@ -48,6 +49,8 @@ function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
   const authorPath = path.dirname(titlePath);
   _removeEmptyDirectory(titlePath);
   _removeEmptyDirectory(authorPath);
+
+  return newDirectoryPath;
 }
 
 function _removeEmptyDirectory(directoryPath) {
@@ -73,12 +76,17 @@ export default class Mp3Files {
   }
 
   async rename(bookMetadata, options) {
-    await this.renameFiles(bookMetadata, options);
-    await this.renameDirectory(bookMetadata, options);
+    const renameFilesResult = await this.renameFiles(bookMetadata, options);
+    const renameDirectoryResult = await this.renameDirectory(bookMetadata, options);
+    return {
+      directory: renameDirectoryResult,
+      files: renameFilesResult
+    }
   }
 
   async renameFiles(bookMetadata, options) {
     let { filePattern, directoryPath } = this._getOptionsWithDefaults(options, bookMetadata);
+    const renameFilesResult = [];
 
     // Get all files in the path
     const pattern = path.join(directoryPath, this.filesGlobPattern)
@@ -88,8 +96,11 @@ export default class Mp3Files {
     // Rename each file
     for(let filePath of files) {
       const fileMetadata = _getFileMetadata(filePath);
-      _renameFile(filePattern, fileMetadata, bookMetadata);
+      const newFilePath = _renameFile(filePattern, fileMetadata, bookMetadata);
+      renameFilesResult.push(newFilePath);
     }
+
+    return renameFilesResult;
   }
 
   async renameDirectory(bookMetadata, options) {
@@ -98,7 +109,8 @@ export default class Mp3Files {
       directoryPath,
       basePath: this.config.basePath
     }
-    _renamePath(directoryPattern, directoryMetadata, bookMetadata)
+    const renamePathResult = _renamePath(directoryPattern, directoryMetadata, bookMetadata);
+    return renamePathResult;
   }
 
   _getOptionsWithDefaults(options = {}, bookMetadata) {

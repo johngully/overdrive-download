@@ -10,7 +10,8 @@ const bookMetadata = {
 
 async function test() {
   const files = new Mp3Files();
-  files.rename(bookMetadata);
+  const result = await files.rename(bookMetadata);
+  console.log(result);
 }
 
 await test();
