@@ -36,7 +36,19 @@ This example uses the specified `.odm` to download the `.mp3` audiobook files.
 odm download-mp3 "./downloads/TheOldManandtheSea.odm"
 ```
 
+### Example rename
+This example renames the files using the least parameters possible. This command uses the **author** and **title** parameters to calculate the path to the book and relies on the config file for other parameters.
+```bash
+odm rename --author "Ernest Hemingway" --title "The Old Man and the Sea"
+```
 
+*See the [Renaming section of this document](#renaming-files) for more information about configuring directory and file naming patterns.*
+
+### Example rename using all possible parameters
+This example renames all the files in the `./downloads/Ernest Hemingway/The Old Man and the Sea` path.  It will result in a new directory `Ernest Hemingway - The Old Man and the Sea` containing files `Part 1.mp3`, `Part 2.mp3`, etc.
+```bash
+odm rename --author "Ernest Hemingway" --title "The Old Man and the Sea" --path "./downloads/Ernest Hemingway/The Old Man and the Sea" -- directoryPattern "${author} - ${title}" --filePattern "Part ${trackNumber}${fileExtension}"
+```
 
 # Package usage
 The project has two primary functions. The first is to acquire the `.odm` file for a title you have on loan at your library's the Overdrive website. The second is to use this `.odm` file to download the `.mp3` audio files.
@@ -68,10 +80,10 @@ console.log(`Download of ${downloadResults.partCount} parts complete:`, download
 # Configuration
 Configuration of the the library are stored in a `.overdrive-downloadsrc` file. The configuration values are stored in a `json` format and are persisted across uses. A [CLI command](#example-config-creation) `odm config` has been created to simplify the process of creating 
 
- ### Base Path
- The path where files will be downloaded. This path can be an absolute path or a path relative to the execution path of the library.
+### Base Path
+The path where files will be downloaded. This path can be an absolute path or a path relative to the execution path of the library.
 
- **Default Value** = "./"
+**Default Value** = "./"
 
 ### Library Name
 The name of the library that is associated with Overdrive. This is typically the prefix `CNAME` to the `overdrive.com` url. In the case of `https://example.overdrive.com` the library name would be `example`
@@ -85,11 +97,110 @@ The password used to login to the Overdrive library website.
 > This value should remain on the computer executing the overdrive-download library. Do not commit the `.overdrive-downloadrc` configuration to a source control repository.
 
 ## Example configuration file
+### Minimum required configuration
 ```json
 {
   "basePath": "./downloads",
   "libraryName": "cityname",
   "username": "123456",
   "password": "mysecretpassword"
+}
+```
+### All possible configuration values
+```json
+{
+  "basePath": "./downloads",
+  "libraryName": "cityname",
+  "username": "123456",
+  "password": "mysecretpassword",
+  "directoryPattern": "${artist}/${title}",
+  "filePattern": "${title} - Part ${trackNumber}.{fileExtension}"
+}
+```
+
+# Renaming files
+By default the files will be named using the following pattern.  This will create a directory structure with the `Author's name` then another directory with the `Title of the book`.  Each file will be named with the `Title of the book - Part 01` incrementing the number for each track.
+
+### Default naming pattern
+```js
+`${author}/${title}/${title} - Part ${trackNumber}${fileExtension}`
+```
+### Resulting files
+
+```
+> Earnest Hemingway
+  ↳ The Old Man and the Sea
+    ↳ The Old Man and the Sea - Part 01.mp3
+    ↳ The Old Man and the Sea - Part 02.mp3
+    ↳ The Old Man and the Sea - Part 03.mp3
+    ...
+```
+
+## Altering the naming pattern
+To change how directories and files are named, modify the [configuration file](#configuration) adding the optional `directoryPattern` and `filePattern` values.  Use the book metadata keys as tokens in the pattern strings.
+
+Patterns use the [javascript template literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) syntax for value substitution.
+
+### Configuration file
+```json
+{
+  ...
+  "directoryPattern": "${author}/${series}",
+  "filePattern": "${title} - ${trackNumber}${fileExtension}"
+}
+```
+### Expected directory and file naming 
+```
+> J.K. Rowling
+  ↳ Harry Potter 1
+    ↳ Harry Potter and the Sorcerers Stone - 01.mp3
+    ↳ Harry Potter and the Sorcerers Stone - 02.mp3
+    ↳ Harry Potter and the Sorcerers Stone - 03.mp3
+  ...
+```
+
+## Example book metadata structure
+Book metadata can be used set the renaming patterns.  Use the JSON keys in the `directoryPattern` and `filePattern` configuration string to modify the naming process.
+```json
+{
+  "author": "",        // The name of the book author
+  "title": "",         // The title of the book
+  "series": "",        // The name of the book series if one exists
+  "trackNumber": "",   // The number of the current track/part
+  "partCount": "",     // The total number of tracks/parts
+  "directoryPath": "", // The path to the book files
+  "filePath": "",      // The path to the current file
+  "fileName": "",      // The name of the current file (without file extension)
+  "fileExtension": ""  // The file extension of the current file including "."
+}
+```
+
+## Examples of book metadata
+Ernest Hemingway - The Old Man and the Sea 
+```json
+{
+  "author": "Ernest Hemingway",
+  "title": "The Old Man and the Sea",
+  "series": "",
+  "trackNumber": "1",
+  "partCount": 6,
+  "directoryPath": "./base/path/Ernest Hemingway/The Old Man and the Sea",
+  "filePath": "./base/path/Ernest Hemingway/The Old Man and the Sea/The Old Man and the Sea - Part 01.mp3",
+  "fileName": "The Old Man and the Sea - Part 1",
+  "fileExtension": ".mp3"
+}
+```
+J.K. Rowling - Harry Potter and the Sorcerer's Stone
+```json
+{
+  "author": "J.K. Rowling",
+  "title": "Harry Potter and the Sorcerer's Stone",
+  "series": "Harry Potter 1",
+  "trackNumber": "01",
+  "partCount": 14,
+  "directoryPath": "./base/path/J.K. Rowling/Harry Potter and the Sorcerers Stone",
+  "filePath": "./base/path/J.K. Rowling/Harry Potter and the Sorcerers Stone/Harry Potter and the Sorcerers Stone - Part 1.mp3",
+  "fileName": "Harry Potter and the Sorcerers Stone - Part 1",
+  "fileExtension": ".mp3"
 }
 ```

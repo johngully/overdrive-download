@@ -1,4 +1,5 @@
 import fs from "fs";
+import fse from "fs-extra";
 import path from "path";
 import { isNotJunk } from "junk";
 import { globby } from "globby";
@@ -26,23 +27,26 @@ function _renameFile(filePattern, fileMetadata, bookMetadata) {
   return newFilePath;
 }
 
-function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
+async function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
   const values = { ...bookMetadata, ...directoryMetadata };
+  const oldDirectoryPath = path.join(values.directoryPath); // Normalize the old directory path naming
 
   // Create the new directory structure based upon the directoryPattern
   const newDirectoryName = fillTemplate(directoryPattern, values);
   const newDirectoryPath = path.join(values.basePath, newDirectoryName)
 
-  // Ensure that the new directory path does not exist
-  if (values.directoryPath === newDirectoryPath) {
-    return;
+  // Skip processing if there's nothing to do
+  if (oldDirectoryPath === newDirectoryPath) {
+    return oldDirectoryPath;
   }
+  // Ensure that the new directory path does not exist
   if (fs.existsSync(newDirectoryPath)) {
     throw new Error(`A directory with the name "${newDirectoryPath}" already exists`, newDirectoryPath);
   }
 
   // Move the files to the new path
-  fs.renameSync(values.directoryPath, newDirectoryPath);
+  await fse.mkdirs(newDirectoryPath);
+  fs.renameSync(oldDirectoryPath, newDirectoryPath);
 
   // If empty remove original directory structure
   const titlePath = values.directoryPath;
@@ -67,6 +71,8 @@ function _removeEmptyDirectory(directoryPath) {
 
 export default class Mp3Files {
 
+  directoryPattern = "${author}/${title}";
+  filePattern = "${title} - Part ${trackNumber}${fileExtension}";
   filesGlobPattern = "**{.mp3,.aac}";
 
   constructor() {
@@ -97,7 +103,9 @@ export default class Mp3Files {
     for(let filePath of files) {
       const fileMetadata = _getFileMetadata(filePath);
       const newFilePath = _renameFile(filePattern, fileMetadata, bookMetadata);
-      renameFilesResult.push(newFilePath);
+      if (filePath !== newFilePath) {
+        renameFilesResult.push(newFilePath);
+      }
     }
 
     return renameFilesResult;
@@ -109,32 +117,43 @@ export default class Mp3Files {
       directoryPath,
       basePath: this.config.basePath
     }
-    const renamePathResult = _renamePath(directoryPattern, directoryMetadata, bookMetadata);
+    const renamePathResult = await _renamePath(directoryPattern, directoryMetadata, bookMetadata);
     return renamePathResult;
   }
 
   _getOptionsWithDefaults(options = {}, bookMetadata) {
     let { filePattern, directoryPattern, directoryPath } = options;
+    const basePath = path.join(this.config.basePath); // normalize the base path naming
     // Get the default configured values for options if they are not provided
-    directoryPath = directoryPath || path.join(this.config.basePath, bookMetadata.author, bookMetadata.title);
-    directoryPattern = directoryPattern || this.config.directoryPattern;
     filePattern = filePattern || this.config.filePattern;
+    directoryPattern = directoryPattern || this.config.directoryPattern;
+    directoryPath = directoryPath || path.join(basePath, bookMetadata.author, bookMetadata.title);
 
+    // Ensure the path exists
+    // If it doesn't add the base path and double-check
     if (!fs.existsSync(directoryPath)) {
-      throw new Error("Could not rename because the specified path does not exist", directoryPath);
+      if (directoryPath.startsWith(basePath)) {
+        throw new Error("Could not rename because the specified path does not exist", directoryPath);
+      }
+      
+      directoryPath = path.join(basePath, directoryPath);      
+      if (!fs.existsSync(directoryPath)) {
+        throw new Error("Could not rename because the specified path does not exist", directoryPath);
+      }
     }
+
     return { filePattern, directoryPattern, directoryPath };
   }
 
   _createDefaultConfig() {
     let configChanged = false;
     if (!this.config.directoryPattern) {
-      this.config.directoryPattern = "${author}/${title}";
+      this.config.directoryPattern = this.directoryPattern;
       configChanged = true;
     }
   
     if (!this.config.filePattern) {
-      this.config.filePattern = "${title} - Part ${trackNumber}${extension}"
+      this.config.filePattern = this.filePattern;
       configChanged = true;
     }
   

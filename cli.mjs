@@ -7,6 +7,7 @@ import { Command } from "commander";
 import Config from "./utils/config.mjs";
 import OdmDownload from "./odm-download.mjs";
 import Mp3Download from "./mp3-download.mjs";
+import Mp3Files from "./mp3-files.mjs";
 
 const program = new Command();
 const configManager = new Config();
@@ -36,6 +37,18 @@ program
   .argument("<Path to .odm>", "Path to `.odm`")
   .action(downloadMp3);
 
+// Rename files
+program
+.command("rename")
+.description("Rename the files and directory structure")
+.option("-a --author <string>", "The name of the Author of the book")
+.option("-t --title <string>", "The title of the book")
+.option("-s --series <string>", "The name of the book series (optional)")
+.option("-p --path <string>", "Path to the book '.mp3' files (optional)")
+.option("-dp --directoryPattern <string>", "Pattern for directory naming (optional)")
+.option("-fp --filePattern <string>", "Pattern for file naming (optional)")
+.action(rename);
+
 // Create config file
 program
   .command("config")
@@ -52,6 +65,8 @@ await program.parseAsync();
 async function download(title) {
   const odmFilePath = await downloadOdm(title);  
   const downloadResults = await downloadMp3(odmFilePath);
+  const renameResults = await renameFiles(downloadResults.bookPath, downloadResults.bookMetadata);
+  
   fs.rmSync(downloadResults.odmPath);
   fs.rmSync(downloadResults.licensePath);
   return downloadResults;
@@ -74,6 +89,26 @@ async function downloadMp3(odmFilePath) {
   const downloadResults = await mp3.download(odmFilePath);
   updateStatus(chalk`{green audiobook download complete} {gray (${downloadResults.partCount} Parts to "${downloadResults.bookPath}")}`, logSymbols.success);
   return downloadResults;
+}
+
+async function rename(options) {
+  ensureConfigExists();
+  newStatus(chalk`{blue audiobook files renaming} {gray (${options.title})}`, chalk`{blue ◌}`);
+  const bookMetadata = {
+    author: options.author,
+    title: options.title,
+    series: options.series
+  }
+  const renameOptions = {
+    directoryPath: options.path,
+    directoryPattern: options.directoryPattern,
+    filePattern: options.filePattern,
+  }
+
+  const mp3Files = new Mp3Files();
+  const renameResults = await mp3Files.rename(bookMetadata, renameOptions);
+  updateStatus(chalk`{green audiobook files rename complete} {gray (${renameResults.files.length} files in "${renameResults.directory}")}`, logSymbols.success);
+  return renameResults;
 }
 
 function createConfig(options) {

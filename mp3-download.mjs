@@ -52,6 +52,7 @@ export default class Mp3Download {
       licensePath,
       odmPath,
       partCount: downloadResults.length,
+      bookMetadata,
       downloadResults
     };
   }
@@ -70,6 +71,7 @@ export default class Mp3Download {
     metadata.series = xpath.select("string(/Metadata/Series)", metadataXml);
     metadata.description = xpath.select("string(/Metadata/Description)", metadataXml);
     metadata.coverImageUrl = xpath.select("string(/Metadata/CoverUrl)", metadataXml);
+    metadata.partCount = xpath.select("count(/OverDriveMedia/Formats/Format/Parts/Part)", odmXml);  
     return metadata;
   }
 
