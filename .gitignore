@@ -1,5 +1,7 @@
 node_modules
 downloads
+thumbs.db
+.DS_Store
 .env
 .*rc
 .vscode
