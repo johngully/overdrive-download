@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node index.mjs",
-    "test": "node tests/mp3-files.tests.mjs"
+    "test": "node tests/index.mjs"
   },
   "author": "John Gully",
   "license": "MIT",
