@@ -1,13 +1,22 @@
 import { v4 as uuidv4 } from 'uuid';
 import fs from "fs";
 import path from "path";
+import { URL } from 'url';
+
+// Normally `new URL(".", import.meta.url).pathname` would be sufficient
+// however since import.meta.url returns /utils/config.mjs 
+// use path.dirname() to go to the parent directory
+const __dirname = path.dirname(new URL(".", import.meta.url).pathname);
+const cwd = process.cwd();
+const defaultConfigFileName = ".overdrivedownloadrc";
 
 export default class Config {
   configFilePath = "";
   config = {};
 
   constructor(explicitConfigPath) {
-    this.configFilePath = getConfigFileName(explicitConfigPath);
+    const configFileName = explicitConfigPath || defaultConfigFileName; 
+    this.configFilePath = getConfigFilePath(configFileName);
   }
 
   getConfig() {
@@ -36,10 +45,19 @@ export default class Config {
   }
 }
 
-function getConfigFileName(explicitFileName) {
-  const defaultFileName = `.${path.basename(path.resolve())}rc`;
-  const fileName = explicitFileName || defaultFileName;
-  return fileName;
+function getConfigFilePath(configFileName) {
+  const currentConfigFilePath = path.join(cwd, configFileName);
+  const packageConfigFilePath = path.join(__dirname, configFileName);
+
+  // By default use the package config file path
+  let configFilePath = packageConfigFilePath;
+
+  // Override the package config file if a local file exists
+  if (fs.existsSync(currentConfigFilePath)) {
+    configFilePath = currentConfigFilePath;
+  } 
+
+  return configFilePath;
 }
 
 
