@@ -65,7 +65,7 @@ await program.parseAsync();
 async function download(title) {
   const odmFilePath = await downloadOdm(title);  
   const downloadResults = await downloadMp3(odmFilePath);
-  const renameResults = await rename(downloadResults.bookPath, downloadResults.bookMetadata);
+  const renameResults = await rename({ path: downloadResults.bookPath, ...downloadResults.bookMetadata });
   
   fs.rmSync(downloadResults.odmPath);
   fs.rmSync(downloadResults.licensePath);
