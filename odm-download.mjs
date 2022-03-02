@@ -25,6 +25,11 @@ export default class OdmDownload {
       throw new Error("Login failed", this.config)
     }
 
+    // Borrow the title
+    if (title) {
+      const borrowed = await this._borrowTitle(title);
+    }
+
     // Get download button for the title on loan
     const downloadButton = await this._getDownloadForTitle(title);
 
@@ -97,6 +102,30 @@ export default class OdmDownload {
     return isLoggedIn;
   }
 
+  async _borrowTitle(title) {
+    // Navigate to the holds page
+    const holdsUrl = `${this.config.url}/account/holds`;
+    await this.page.goto(holdsUrl, this.pageConfig.goto);
+
+    // Find the title
+    const titleElement = await this._getTitle(title);
+
+    // Get the borrow button
+    const parent1 = await titleElement.getProperty('parentNode');
+    const parent2 = await parent1.getProperty('parentNode');
+    const borrowButton = await parent2.$("a.borrowButton");
+
+    // Borrow the title
+    await borrowButton.click();
+
+    // Click through the Confirm prompt
+    await this.page.waitForTimeout(100);
+    const borrowPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
+    const confirmButton = await this.page.$("div.reveal-modal a.confirm");
+    await confirmButton.click();
+    const borrowResponse = await borrowPromise;
+  }
+
   async _getDownloadForTitle(title) {
     // Navigate to the loans page
     const loansUrl = `${this.config.url}/account/loans`;
@@ -133,9 +162,9 @@ export default class OdmDownload {
     // Get the title element and name
     const titleElement = await this.page.$(titleQuery);
     if (!titleElement && !title) {
-      throw new Error(`No title could be found on the Loans page.`)
+      throw new Error(`No title could be found.`)
     } else if (!titleElement) {
-      throw new Error(`The title: "${title}" could not be found on the Loans page. Please ensure you have borrowed the title and it is spelled correctly.`)
+      throw new Error(`The title: "${title}" could not be found. Please ensure you have borrowed the title and it is spelled correctly.`)
     }
     
     // title = await (await titleElement.getProperty("title")).jsonValue();
