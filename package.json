@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node index.mjs",
     "test": "node tests/index.mjs",
-    "publish": "npx np"
+    "np": "npx np"
   },
   "author": "John Gully",
   "license": "MIT",
