@@ -91,6 +91,11 @@ console.log(`".odm" file path:`, odmFilePath);
 // Use the ODM to download the title mp3 files
 const downloadResults = await overdrive.mp3.download(odmFilePath);
 console.log(`Download of ${downloadResults.partCount} parts complete:`, downloadResults.bookPath);
+
+// Use the download results to rename files
+const renameResults = await overdreive.files.rename({ path: downloadResults.bookPath, ...downloadResults.bookMetadata });
+console.log(`Rename of ${renameResults.files.length} files complete:`, renameResults.directory)
+
 ```
 
 # Configuration
