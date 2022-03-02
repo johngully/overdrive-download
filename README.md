@@ -17,7 +17,7 @@ odm "Title of book"
 ### Example 
 ```bash
 npm install -g overdrivedownload
-odm config -l nypl -u 111111 -p abcdef -dl "~/Downloads/Audiobooks"
+odm config -l nypl -u 123456 -p abcdef -dl "~/Downloads/Audiobooks"
 odm "The Old Man and the Sea"
 ```
 
