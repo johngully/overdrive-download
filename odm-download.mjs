@@ -68,14 +68,17 @@ export default class OdmDownload {
     this.browser = await puppeteer.launch({ headless });
     this.page = await this.browser.newPage();
 
+    // Configure the browser so that the download button is displayed
+    // This can currently be done by emulating a mobile device, 
+    // however it can also be done by providing the right user-agent string
+    // await this.page.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15 (KHTML, like Gecko)");
+    const phone = puppeteer.devices['iPad'];
+    await this.page.emulate(phone);
+    
     // If specified, configure the download path
     if (this.config.basePath) {
       await this.page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: this.config.basePath});
-    }
-    
-    // Emulate a mobile device so that the download button is displayed
-    const phone = puppeteer.devices['iPad'];
-    await this.page.emulate(phone);
+    }    
   }
   
   async _stopBrowser() {
@@ -118,10 +121,16 @@ export default class OdmDownload {
     // Get the download button (relative to the title)
     const parent1 = await titleElement.getProperty('parentNode');
     const parent2 = await parent1.getProperty('parentNode');
-    const downloadButton = await parent2.$("a.downloadButton")
+    const accordianButton = await parent2.$("a.accordian-title");
+    const downloadButton = await parent2.$("a.downloadButton");
+
+    // Expand the accordian so that the download button is clickable
+    if (accordianButton) {
+      await accordianButton.click(); 
+    }
 
     // If it is present, return the download button
-    if (downloadButton) {
+    if (downloadButton) {  
       return downloadButton;
     } else {
       return false;
@@ -129,22 +138,18 @@ export default class OdmDownload {
   }
 
   async _downloadOdm(downloadButton) {
-    let downloadFileName = "";
-    // Start the download
-    await downloadButton.click()
+    // Configure the download response handler to catch responses from the library site
+    const downloadPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
 
-    // Click through the Confirm prompt
-    await this.page.waitForTimeout(100);
-    const confirmButton = await this.page.$("div.reveal-modal a.confirm");
-    if (confirmButton) {
-      const downloadPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
-      await confirmButton.click();
+    // Download the odm
+    await downloadButton.click();
 
-      // Wait until 
-      const downloadResponse = await downloadPromise;
-      const location = downloadResponse.headers().location;
-      const downloadFileName = textBetween(location, ".com/", "?");
-      return downloadFileName;
+    // Get the download filename from the response headers
+    const downloadResponse = await downloadPromise;
+    const location = downloadResponse.headers().location;
+    const downloadFileName = textBetween(location, ".com/", "?");
+    if (!downloadFileName) {
+      throw new Error(`The filename of the .odm could not be determined after download`)
     }
     return downloadFileName;
   }
