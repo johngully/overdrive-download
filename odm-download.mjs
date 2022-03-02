@@ -16,10 +16,6 @@ export default class OdmDownload {
   async download(title) {
     let filePath = "";
 
-    if (!title) {
-      throw new Error("Title is require but was not present");
-    }
-
     // Initialize the browser
     const page = await this._startBrowser();
     
@@ -30,15 +26,11 @@ export default class OdmDownload {
     }
 
     // Get download button for the title on loan
-    const downloadButton = await this._getTitleOnLoan(title)
+    const downloadButton = await this._getDownloadForTitle(title)
 
     // If there is a download, download the file
-    if (downloadButton) {
-      const fileName = await this._downloadOdm(downloadButton);
-      filePath = path.join(this.config.basePath, fileName);
-    } else {
-      throw new Error(`The title: "${title}" could not be found on the Loans page. Please ensure you have borrowed the title and it is spelled correctly (case sensitive).`)
-    }
+    const fileName = await this._downloadOdm(downloadButton);
+    filePath = path.join(this.config.basePath, fileName);
     
     // Stop the browswer and return the file location
     await this._stopBrowser();
@@ -105,18 +97,33 @@ export default class OdmDownload {
     return isLoggedIn;
   }
 
-  async _getTitleOnLoan(title) {
+  async _getTitle(title) {
+    // Find the title element, use the title name if specified
+    let titleQuery = `h3[title]`
+    if (title) {
+      titleQuery = `h3[title="${title}" i]`; // The "i" at the end of the selector makes the query case insensitive
+    }
+    
+    // Get the title element and name
+    const titleElement = await this.page.$(titleQuery);
+    if (!titleElement && !title) {
+      throw new Error(`No title could be found on the Loans page.`)
+    } else if (!titleElement) {
+      throw new Error(`The title: "${title}" could not be found on the Loans page. Please ensure you have borrowed the title and it is spelled correctly.`)
+    }
+    
+    // title = await (await titleElement.getProperty("title")).jsonValue();
+    // console.log("Title:", title);
+    return titleElement;
+  }
+
+  async _getDownloadForTitle(title) {
     // Navigate to the loans page
     const loansUrl = `${this.config.url}/account/loans`;
     await this.page.goto(loansUrl, this.pageConfig.goto);
 
     // Find the title
-    const titleQuery = `h3[title="${title}"]`;
-    const titleElement = await this.page.$(titleQuery);
-    debugger
-    if (!titleElement) {
-      return false;
-    }
+    const titleElement = await this._getTitle(title);
 
     // Get the download button (relative to the title)
     const parent1 = await titleElement.getProperty('parentNode');
@@ -130,11 +137,10 @@ export default class OdmDownload {
     }
 
     // If it is present, return the download button
-    if (downloadButton) {  
-      return downloadButton;
-    } else {
-      return false;
+    if (!downloadButton) {  
+      throw new Error(`The download for: "${title}" could not be found on the Loans page.`)
     }
+    return downloadButton;
   }
 
   async _downloadOdm(downloadButton) {
@@ -149,7 +155,7 @@ export default class OdmDownload {
     const location = downloadResponse.headers().location;
     const downloadFileName = textBetween(location, ".com/", "?");
     if (!downloadFileName) {
-      throw new Error(`The filename of the .odm could not be determined after download`)
+      throw new Error(`The filename of the .odm could not be determined after download`);
     }
     return downloadFileName;
   }
