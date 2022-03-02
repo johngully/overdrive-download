@@ -54,9 +54,9 @@ program
   .command("config")
   .description("Create/update the configuration file")
   .option("-l --library <string>", "Name of the library")
-  .option("-dl --download <string>", "Base path for downloads")
   .option("-u --username <string>", "Username`")
   .option("-p --password <string>", "Password`")
+  .option("-dl --download <string>", "Base path for downloads")
   .action(createConfig);
 
 // Parse the CLI inputs
