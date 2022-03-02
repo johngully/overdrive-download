@@ -5,6 +5,22 @@ The project provides classes that can be used programatically download the `.odm
 
 > This project is designed for the legal acquisition of audiobooks for library patrons. Please treat authors and content creators with respect by honoring their copyrights.
 
+# Quickstart
+To get started simply install the command using `npm`, create a configuration file, and download any book that you have borrowed from Overdrive.
+
+### Quickstart Commands
+```bash
+npm install -g overdrivedownload
+odm config -l example-library-name -u example-username -p example-password -dl "./example/dowload/path"
+odm "Title of book"
+```
+### Example 
+```bash
+npm install -g overdrivedownload
+odm config -l nypl -u 111111 -p abcdef -dl "~/Downloads/Audiobooks"
+odm "The Old Man and the Sea"
+```
+
 # CLI Usage
 
 ### CLI installation
@@ -15,7 +31,7 @@ Once the CLI has been installed a configuration file needs to be created. A cli 
 
 ### Example config creation
 ```bash
-odm config -u example-username -p example-password -dl "./example/dowload/path" -l example-library-name}
+odm config -l example-library-name -u example-username -p example-password -dl "./example/dowload/path" }
 ```
 
 ### Example basic download
@@ -78,7 +94,9 @@ console.log(`Download of ${downloadResults.partCount} parts complete:`, download
 ```
 
 # Configuration
-Configuration of the the library are stored in a `.overdrive-downloadsrc` file. The configuration values are stored in a `json` format and are persisted across uses. A [CLI command](#example-config-creation) `odm config` has been created to simplify the process of creating 
+Configuration of the the library are stored in a `.overdrivedownloadsrc` file. The configuration values are stored in a `json` format and are persisted across uses. A [CLI command](#example-config-creation) `odm config` has been created to simplify the process of creating.
+
+> Running the `odm config` command additional times will update the config file with new values. Each execution of the command is additive, which means that you are not required to specify all the values every time.
 
 ### Base Path
 The path where files will be downloaded. This path can be an absolute path or a path relative to the execution path of the library.
@@ -94,7 +112,7 @@ The username used to login to the Overdrive library website. This may be your li
 ### Password
 The password used to login to the Overdrive library website. 
 
-> This value should remain on the computer executing the overdrive-download library. Do not commit the `.overdrive-downloadrc` configuration to a source control repository.
+> This value should remain on the computer executing the overdrive-download library. Do not commit the `.overdrivedownloadrc` configuration to a source control repository.
 
 ## Example configuration file
 ### Minimum required configuration
