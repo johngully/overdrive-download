@@ -26,7 +26,7 @@ export default class OdmDownload {
     }
 
     // Get download button for the title on loan
-    const downloadButton = await this._getDownloadForTitle(title)
+    const downloadButton = await this._getDownloadForTitle(title);
 
     // If there is a download, download the file
     const fileName = await this._downloadOdm(downloadButton);
@@ -97,26 +97,6 @@ export default class OdmDownload {
     return isLoggedIn;
   }
 
-  async _getTitle(title) {
-    // Find the title element, use the title name if specified
-    let titleQuery = `h3[title]`
-    if (title) {
-      titleQuery = `h3[title="${title}" i]`; // The "i" at the end of the selector makes the query case insensitive
-    }
-    
-    // Get the title element and name
-    const titleElement = await this.page.$(titleQuery);
-    if (!titleElement && !title) {
-      throw new Error(`No title could be found on the Loans page.`)
-    } else if (!titleElement) {
-      throw new Error(`The title: "${title}" could not be found on the Loans page. Please ensure you have borrowed the title and it is spelled correctly.`)
-    }
-    
-    // title = await (await titleElement.getProperty("title")).jsonValue();
-    // console.log("Title:", title);
-    return titleElement;
-  }
-
   async _getDownloadForTitle(title) {
     // Navigate to the loans page
     const loansUrl = `${this.config.url}/account/loans`;
@@ -141,6 +121,26 @@ export default class OdmDownload {
       throw new Error(`The download for: "${title}" could not be found on the Loans page.`)
     }
     return downloadButton;
+  }
+
+  async _getTitle(title) {
+    // Find the title element, use the title name if specified
+    let titleQuery = `h3[title]`
+    if (title) {
+      titleQuery = `h3[title="${title}" i]`; // The "i" at the end of the selector makes the query case insensitive
+    }
+    
+    // Get the title element and name
+    const titleElement = await this.page.$(titleQuery);
+    if (!titleElement && !title) {
+      throw new Error(`No title could be found on the Loans page.`)
+    } else if (!titleElement) {
+      throw new Error(`The title: "${title}" could not be found on the Loans page. Please ensure you have borrowed the title and it is spelled correctly.`)
+    }
+    
+    // title = await (await titleElement.getProperty("title")).jsonValue();
+    // console.log("Title:", title);
+    return titleElement;
   }
 
   async _downloadOdm(downloadButton) {
