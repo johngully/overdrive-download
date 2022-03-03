@@ -6,69 +6,6 @@ import { globby } from "globby";
 import fillTemplate from "es6-dynamic-template";
 import Config from "./utils/config.mjs";
 
-function _getFileMetadata(filePath) {
-  const directoryPath = path.dirname(filePath);
-  const fileExtension = path.extname(filePath);
-  const fileName = path.basename(filePath, fileExtension);
-  const trackNumber = fileName.replace(/.*\D(\d+)\D*/, "$1"); // Gets the last number in the fileName string
-  return { directoryPath, fileExtension, fileName, filePath, trackNumber };
-}
-
-function _renameFile(filePattern, fileMetadata, bookMetadata) {
-  const values = { ...bookMetadata, ...fileMetadata };
-  
-  // Pad the trackNumber with leading 0's
-  values.trackNumber = fileMetadata.trackNumber.padStart(bookMetadata.partCount.toString().length, "0");
-
-  // Create the new file naming structure based upon the filePattern
-  const newFileName = fillTemplate(filePattern, values);
-  const newFilePath = path.join(fileMetadata.directoryPath, newFileName)
-  fs.renameSync(fileMetadata.filePath, newFilePath);
-  return newFilePath;
-}
-
-async function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
-  const values = { ...bookMetadata, ...directoryMetadata };
-  const oldDirectoryPath = path.join(values.directoryPath); // Normalize the old directory path naming
-
-  // Create the new directory structure based upon the directoryPattern
-  const newDirectoryName = fillTemplate(directoryPattern, values);
-  const newDirectoryPath = path.join(values.basePath, newDirectoryName)
-
-  // Skip processing if there's nothing to do
-  if (oldDirectoryPath === newDirectoryPath) {
-    return oldDirectoryPath;
-  }
-  // Ensure that the new directory path does not exist
-  if (fs.existsSync(newDirectoryPath)) {
-    throw new Error(`A directory with the name "${newDirectoryPath}" already exists`, newDirectoryPath);
-  }
-
-  // Move the files to the new path
-  await fse.mkdirs(newDirectoryPath);
-  fs.renameSync(oldDirectoryPath, newDirectoryPath);
-
-  // If empty remove original directory structure
-  const titlePath = values.directoryPath;
-  const authorPath = path.dirname(titlePath);
-  _removeEmptyDirectory(titlePath);
-  _removeEmptyDirectory(authorPath);
-
-  return newDirectoryPath;
-}
-
-function _removeEmptyDirectory(directoryPath) {
-  if (!fs.existsSync(directoryPath)) {
-    return;
-  }
-  
-  // If the directory is empty remove it (get a list of existing files, excluding system files like .DS_Store)
-  const directoryContents = fs.readdirSync(directoryPath).filter(isNotJunk);
-  if (directoryContents.length === 0) {
-    fs.rmSync(directoryPath, { recursive: true })
-  }
-}
-
 export default class Mp3Files {
 
   directoryPattern = "${author}/${title}";
@@ -166,4 +103,69 @@ export default class Mp3Files {
       this.configManager.saveConfig(this.config);
     }
   }
+}
+
+function _renameFile(filePattern, fileMetadata, bookMetadata) {
+  const fileName = _getFileName(filePattern, fileMetadata, bookMetadata);
+  const filePath = path.join(fileMetadata.directoryPath, fileName)
+  fs.renameSync(fileMetadata.filePath, filePath);
+  return filePath;
+}
+
+async function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
+  const values = { ...bookMetadata, ...directoryMetadata };
+  const oldDirectoryPath = path.join(values.directoryPath); // Normalize the old directory path naming
+
+  // Create the new directory structure based upon the directoryPattern
+  const newDirectoryName = fillTemplate(directoryPattern, values);
+  const newDirectoryPath = path.join(values.basePath, newDirectoryName)
+
+  // Skip processing if there's nothing to do
+  if (oldDirectoryPath === newDirectoryPath) {
+    return oldDirectoryPath;
+  }
+  // Ensure that the new directory path does not exist
+  if (fs.existsSync(newDirectoryPath)) {
+    throw new Error(`A directory with the name "${newDirectoryPath}" already exists`, newDirectoryPath);
+  }
+
+  // Move the files to the new path
+  await fse.mkdirs(newDirectoryPath);
+  fs.renameSync(oldDirectoryPath, newDirectoryPath);
+
+  // If empty remove original directory structure
+  const titlePath = values.directoryPath;
+  const authorPath = path.dirname(titlePath);
+  _removeEmptyDirectory(titlePath);
+  _removeEmptyDirectory(authorPath);
+
+  return newDirectoryPath;
+}
+
+function _removeEmptyDirectory(directoryPath) {
+  if (!fs.existsSync(directoryPath)) {
+    return;
+  }
+  
+  // If the directory is empty remove it (get a list of existing files, excluding system files like .DS_Store)
+  const directoryContents = fs.readdirSync(directoryPath).filter(isNotJunk);
+  if (directoryContents.length === 0) {
+    fs.rmSync(directoryPath, { recursive: true })
+  }
+}
+
+function _getFileMetadata(filePath) {
+  const directoryPath = path.dirname(filePath);
+  const fileExtension = path.extname(filePath);
+  const fileName = path.basename(filePath, fileExtension);
+  const trackNumber = fileName.replace(/.*\D(\d+)\D*/, "$1"); // Gets the last number in the fileName string
+  return { directoryPath, fileExtension, fileName, filePath, trackNumber };
+}
+
+function _getFileName(filePattern, fileMetadata, bookMetadata) {
+  // Create the new file naming structure based upon the filePattern
+  const values = { ...bookMetadata, ...fileMetadata };
+  values.trackNumber = fileMetadata.trackNumber.padStart(bookMetadata.partCount.toString().length, "0"); // Pad the trackNumber with leading 0's
+  const fileName = fillTemplate(filePattern, values);
+  return fileName;
 }
