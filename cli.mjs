@@ -80,7 +80,7 @@ async function download(title) {
   const odmFilePath = await downloadOdm(title);  
   const downloadResults = await downloadMp3(odmFilePath);
   const renameResults = await rename({ path: downloadResults.bookPath, ...downloadResults.bookMetadata });
-  const tagResults = await tag({ path: renameResults.directoryPath, ...downloadResults.bookMetadata });
+  const tagResults = await tag({ path: renameResults.directory, ...downloadResults.bookMetadata });
   
   fs.rmSync(downloadResults.odmPath);
   fs.rmSync(downloadResults.licensePath);
