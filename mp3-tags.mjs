@@ -23,7 +23,7 @@ export default class Mp3Tags {
   }
 
   async normalizeTags(directoryPath, bookMetadata, options) {
-    this.config.titlePattern = options.titlePattern || this.config.titlePattern;
+    this.config.titlePattern = options?.titlePattern || this.config.titlePattern;
 
     // Get all files in the path
     const pattern = path.join(directoryPath, this.filesGlobPattern);
