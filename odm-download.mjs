@@ -108,7 +108,7 @@ export default class OdmDownload {
     // Get the download button (relative to the title)
     const parent1 = await titleElement.getProperty('parentNode');
     const parent2 = await parent1.getProperty('parentNode');
-    const accordianButton = await parent2.$("a.accordian-title");
+    const accordianButton = await parent2.$("a.accordion-title");
     const downloadButton = await parent2.$("a.downloadButton");
 
     // Expand the accordian so that the download button is clickable
