@@ -161,7 +161,7 @@ function createConfig(options) {
 
 function ensureConfigExists() {
   if (!configManager.exists()) {
-    program.showHelpAfterError(chalk`{gray ${logSymbols.info} Try using the following command to create one:\n  {italic odm config -u example-username -p example-password -dl "./example/dowload/path" -l example-library-name}\n}`)
+    program.showHelpAfterError(chalk`{gray ${logSymbols.info} Try using the following command to create one:\n  {italic odm config -l example-library-name -u example-username -p example-password -dl "./example/dowload/path"}\n}`)
     program.error(chalk`Could not locate a configuration file: {bold ${configManager.configFilePath}}`);
   }
 }
