@@ -86,25 +86,30 @@ export default class Mp3Files {
     const renameDirectoryResult = await this.renameDirectory(bookMetadata, options);
     return {
       directory: renameDirectoryResult,
-      files: renameFilesResult
+      files: renameFilesResult.files,
+      bookMetadata: renameFilesResult.bookMetadata
     }
   }
 
   async renameFiles(bookMetadata, options) {
     let { filePattern, directoryPath } = this._getOptionsWithDefaults(options, bookMetadata);
-    const renameFilesResult = [];
 
     // Get all files in the path
     const pattern = path.join(directoryPath, this.filesGlobPattern)
     const files = await globby(pattern);
     bookMetadata.partCount = files.length;
 
+    const renameFilesResult = {
+      bookMetadata,
+      files: []
+    };
+
     // Rename each file
     for(let filePath of files) {
       const fileMetadata = _getFileMetadata(filePath);
       const newFilePath = _renameFile(filePattern, fileMetadata, bookMetadata);
       if (filePath !== newFilePath) {
-        renameFilesResult.push(newFilePath);
+        renameFilesResult.files.push(newFilePath);
       }
     }
 

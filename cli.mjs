@@ -8,6 +8,7 @@ import Config from "./utils/config.mjs";
 import OdmDownload from "./odm-download.mjs";
 import Mp3Download from "./mp3-download.mjs";
 import Mp3Files from "./mp3-files.mjs";
+import Mp3Tags from "./mp3-tags.mjs";
 
 const program = new Command();
 const configManager = new Config();
@@ -49,6 +50,19 @@ program
 .option("-fp --filePattern <string>", "Pattern for file naming (optional)")
 .action(rename);
 
+// Tag files
+program
+.command("tag")
+.description("Set ID3 tags on the '.mp3' files")
+.option("-p --path <string>", "Path to the book '.mp3' files")
+.option("-a --author <string>", "The name of the Author of the book")
+.option("-t --title <string>", "The title of the book")
+.option("-s --series <string>", "The name of the book series (optional)")
+.option("-d --description <string>", "The short description of the book (optional)")
+.option("-pc --partCount <string>", "The total number of parts the books has been broken into (optional)")
+.option("-tp --titlePattern <string>", "Pattern for title part naming (optional)")
+.action(tag);
+
 // Create config file
 program
   .command("config")
@@ -66,6 +80,7 @@ async function download(title) {
   const odmFilePath = await downloadOdm(title);  
   const downloadResults = await downloadMp3(odmFilePath);
   const renameResults = await rename({ path: downloadResults.bookPath, ...downloadResults.bookMetadata });
+  const tagResults = await tag({ path: renameResults.directoryPath, ...downloadResults.bookMetadata });
   
   fs.rmSync(downloadResults.odmPath);
   fs.rmSync(downloadResults.licensePath);
@@ -109,6 +124,26 @@ async function rename(options) {
   const renameResults = await mp3Files.rename(bookMetadata, renameOptions);
   updateStatus(chalk`{green audiobook files rename complete} {gray (${renameResults.files.length} files in "${renameResults.directory}")}`, logSymbols.success);
   return renameResults;
+}
+
+async function tag(options) {
+  ensureConfigExists();
+  newStatus(chalk`{blue audiobook files tagging} {gray (${options.title})}`, chalk`{blue ◌}`);
+  const bookPath = options.path;
+  const bookMetadata = {
+    author: options.author,
+    title: options.title,
+    series: options.series,
+    description: options.description,
+    partCount: options.partCount,
+  };
+  const tagOptions = {
+    titlePattern: options.titlePattern
+  };
+
+  const mp3Tags = new Mp3Tags();
+  const tagResults = await mp3Tags.normalizeTags(bookPath, bookMetadata, tagOptions);
+  updateStatus(chalk`{green audiobook files tagging complete} {gray (${tagResults.files.length} files in "${bookPath}")}`, logSymbols.success);
 }
 
 function createConfig(options) {
