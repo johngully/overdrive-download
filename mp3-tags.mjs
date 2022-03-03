@@ -39,10 +39,12 @@ export default class Mp3Tags {
     for (let filePath of files) {
       const fileMetadata = _getFileMetadata(filePath);
       const tags = this.mapMetadataToID3Tags(fileMetadata, bookMetadata);
-      const success = NodeID3.write(tags, filePath);
-      if (success) {
-        normalizeTagsResult.files.push(filePath);
+      const clearResponse = NodeID3.removeTags(filePath);
+      const writeResponse = NodeID3.write(tags, filePath);
+      if (writeResponse instanceof Error) {
+        throw writeResponse;
       }
+      normalizeTagsResult.files.push(filePath);
     }
 
     return normalizeTagsResult;
