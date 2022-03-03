@@ -23,6 +23,7 @@
     "junk": "^4.0.0",
     "log-symbols": "^5.1.0",
     "log-update": "^5.0.0",
+    "node-id3": "^0.2.3",
     "puppeteer": "^13.1.2",
     "uuid": "^8.3.2",
     "xmldom": "^0.6.0",
