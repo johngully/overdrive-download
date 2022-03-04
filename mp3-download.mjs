@@ -3,7 +3,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from 'uuid';
-import { DOMParser } from "xmldom";
+import { DOMParser } from "@xmldom/xmldom";
 import xpath from "xpath";
 import Config from "./utils/config.mjs"
 const parser = new DOMParser();
