@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node index.mjs",
-    "test": "node tests/index.mjs",
+    "test": "node tests/index.tests.mjs",
     "np": "npx np"
   },
   "author": "John Gully",
