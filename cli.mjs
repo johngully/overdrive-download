@@ -26,6 +26,12 @@ program
 
 // Download ODM only
 program
+  .command("auto")
+  .description("CLI to download Overdrive audiobooks. This mode automatically downloads the first available audiobook")
+  .action(download);
+
+// Download ODM only
+program
   .command("download-odm")
   .description("Download the Overdrive '.odm' for the specified title")
   .argument("<Title of audiobook>", "Title of audiobook on loan")
@@ -77,6 +83,10 @@ program
 await program.parseAsync();
 
 async function download(title) {
+  // Add this check since the "auto" command passes the empty arguments as an empty object
+  if (title instanceof Object) {
+    title = null;
+  }
   const odmFilePath = await downloadOdm(title);  
   const downloadResults = await downloadMp3(odmFilePath);
   const renameResults = await rename({ path: downloadResults.bookPath, ...downloadResults.bookMetadata });
@@ -89,10 +99,11 @@ async function download(title) {
 
 async function downloadOdm(title) {
   ensureConfigExists();
-  newStatus(chalk`{blue .odm downloading} {gray (${title})}`, chalk`{blue ◌}`);
+  const optionalTitleText = title ? ` (${title})` : ``;
+  newStatus(chalk`{blue .odm downloading} {gray ${optionalTitleText}}`, chalk`{blue ◌}`);
   const odm = new OdmDownload();
   const odmFilePath = await odm.download(title);
-  updateStatus(chalk`{green .odm download complete} {gray (${title})}`, logSymbols.success);
+  updateStatus(chalk`{green .odm download complete} {gray ${optionalTitleText}}`, logSymbols.success);
   return odmFilePath;
 }
 
