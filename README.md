@@ -1,8 +1,14 @@
 # OverDrive Download
 As Overdrive has deprecated Overdrive Media Console and even hidden the ability to download required `.odm` files for various platforms, it has become more challenging to download library audiobooks for offline use. This project aims to simplify the process for users who care to download and manage mp3 audiobooks.
 
-The project provides classes that can be used programatically download the `.odm` file as well as the `.mp3` files for books you have on loan from the Overdrive website.
+The project provides a CLI, as well as code libraries, that can be used to download audiobooks from the Overdrive website for your library. There are simple commands to automate the entire process, as well as access to each capability for individual use.  The project currently supports:
 
+* Downloading the the `.odm` file and acquiring the appropriate licenses
+* Downloading the `.mp3` audiobook files
+* Renaming the files and directories in a format of your choosing
+* Normalizing ID3 tags for consistency
+
+### Respect the content creators
 > This project is designed for the legal acquisition of audiobooks for library patrons. Please treat authors and content creators with respect by honoring their copyrights.
 
 # Quickstart
@@ -34,8 +40,14 @@ Once the CLI has been installed a configuration file needs to be created. A cli 
 odm config -l example-library-name -u example-username -p example-password -dl "./example/dowload/path" }
 ```
 
+### Example auto download
+This example finds the first book available in on the loans page and downloads it. This performs the full download process including: downloading the `.odm`, downloading the `.mp3` files, renaming them consistently, and normalizing the ID3 tags.
+```bash
+odm auto
+```
+
 ### Example basic download
-This example finds the book by the specified title, downloads the `.odm` then uses it to download the `.mp3` files.
+This example finds the book by the specified title, and performs the full download process.
 ```bash
 odm "The Old Man and the Sea"
 ```
@@ -106,18 +118,47 @@ Configuration of the the library are stored in a `.overdrivedownloadsrc` file. T
 ### Base Path
 The path where files will be downloaded. This path can be an absolute path or a path relative to the execution path of the library.
 
-**Default Value** = "./"
+**Default Value** = `./`
+
+**Optional**
 
 ### Library Name
 The name of the library that is associated with Overdrive. This is typically the prefix `CNAME` to the `overdrive.com` url. In the case of `https://example.overdrive.com` the library name would be `example`
 
+**Required**
+
 ### Username
 The username used to login to the Overdrive library website. This may be your library card number.
+
+**Required**
 
 ### Password
 The password used to login to the Overdrive library website. 
 
 > This value should remain on the computer executing the overdrive-download library. Do not commit the `.overdrivedownloadrc` configuration to a source control repository.
+
+**Required**
+
+### Directory Pattern
+The pattern used to name the directories that will contain the audiobook files. This can be a single directory name, or a path.
+
+**Default Value** = `${artist}/${title}`
+
+**Optional**
+
+### File Pattern
+The pattern used to name the audiobook files.
+
+**Default Value** = `${title} - Part ${trackNumber}.{fileExtension}`
+
+**Optional**
+
+### Title Pattern
+The pattern used to format the `title` tag during ID3 tag normalization.
+
+**Default Value** = `${title} - Part ${trackNumber}`
+
+**Optional**
 
 ## Example configuration file
 ### Minimum required configuration
@@ -137,7 +178,8 @@ The password used to login to the Overdrive library website.
   "username": "123456",
   "password": "mysecretpassword",
   "directoryPattern": "${artist}/${title}",
-  "filePattern": "${title} - Part ${trackNumber}.{fileExtension}"
+  "filePattern": "${title} - Part ${trackNumber}.{fileExtension}",
+  "titlePattern": "${title} - Part ${trackNumber}"
 }
 ```
 
