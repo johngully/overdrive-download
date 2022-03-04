@@ -75,17 +75,17 @@ odm rename --author "Ernest Hemingway" --title "The Old Man and the Sea"
 ### Example rename using all possible parameters
 This example renames all the files in the `./downloads/Ernest Hemingway/The Old Man and the Sea` path.  It will result in a new directory `Ernest Hemingway - The Old Man and the Sea` containing files `Part 1.mp3`, `Part 2.mp3`, etc.
 ```bash
-odm rename --author "Ernest Hemingway" --title "The Old Man and the Sea" --path "./downloads/Ernest Hemingway/The Old Man and the Sea" -- directoryPattern "${author} - ${title}" --filePattern "Part ${trackNumber}${fileExtension}"
+odm rename --author "Ernest Hemingway" --title "The Old Man and the Sea" --path "./downloads/Ernest Hemingway/The Old Man and the Sea" --directoryPattern "${author} - ${title}" --filePattern "Part ${trackNumber}${fileExtension}"
 ```
 
 # Package usage
-The project has two primary functions. The first is to acquire the `.odm` file for a title you have on loan at your library's the Overdrive website. The second is to use this `.odm` file to download the `.mp3` audio files.
+The project is currently designed to simplify the workflow of downloading audiobooks from your local Overdrive library. The project currently supports four primary functions.
+* Downloading the the `.odm` file and acquiring the appropriate licenses
+* Downloading the `.mp3` audiobook files
+* Renaming the files and directories in a format of your choosing
+* Normalizing ID3 tags for consistency
 
-Begin by logging into the Overdrive website for your library. Find the book you are interested in, and "Borrow" the title. This should add the book to the "Loans" page under "My Account".
-
-To get the `.odm` file you must provide the **exact title name** of the book you have on loan. 
-
-To get the `.mp3` files you must provide the path to the `.odm` file for the title. Successful execution of `OdmDownload.download()` will return the path to the `.odm` file.
+Begin by logging into the Overdrive website for your library. Find the book you are interested in, and "Borrow" the title. This should add the book to the "Loans" page under "My Account". Once the title is on loan, you may use the library to acquire the `.odm` file and the associated `.mp3` files. Renaming and tagging of files are convienience operations that will work with files regardless of Overdrive.
 
 ## Example
 ```js
@@ -96,18 +96,25 @@ const overdrive = new OverdriveDownload();
 // loans page of your library's overdrive website
 const title = "The Old Man and the Sea"; 
 
-// Download the ODM for the specified title
+// Download the ODM for the specified title from the library website
 const odmFilePath = await overdrive.odm.download(title);
-console.log(`".odm" file path:`, odmFilePath);
+console.log("ODM file path:", odmFilePath);
 
 // Use the ODM to download the title mp3 files
 const downloadResults = await overdrive.mp3.download(odmFilePath);
-console.log(`Download of ${downloadResults.partCount} parts complete:`, downloadResults.bookPath);
+console.log(`Download of ${downloadResults.partCount} parts complete:`, downloadResults.bookPath)
 
-// Use the download results to rename files
-const renameResults = await overdreive.files.rename({ path: downloadResults.bookPath, ...downloadResults.bookMetadata });
-console.log(`Rename of ${renameResults.files.length} files complete:`, renameResults.directory)
+// Use the download results to rename the files consistently
+const renameResults = await overdrive.files.rename(downloadResults.bookMetadata);
+console.log(`Rename of ${renameResults.files.length} files complete:`, renameResults.directory);
 
+// Use the rename results to normalize the ID3 tags
+const tagResults = await overdrive.tags.normalizeTags(renameResults.directory, downloadResults.bookMetadata);
+console.log(`Tagging of ${tagResults.files.length} files complete`, renameResults.directory);
+
+// Cleanup the odm and license files
+fs.rmSync(downloadResults.odmPath);
+fs.rmSync(downloadResults.licensePath);
 ```
 
 # Configuration
