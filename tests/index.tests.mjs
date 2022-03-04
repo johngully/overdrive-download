@@ -1,6 +1,6 @@
 import { default as OverdriveDownload, OdmDownload, Mp3Download } from "../index.mjs";
 import fs from "fs";
-import { exit } from "process";
+
 const title = "";  // Set this value to test the download of a title that you have on loan
 
 if (title === "") {
@@ -17,6 +17,13 @@ console.log("ODM file path:", odmFilePath);
 const downloadResults = await overdrive.mp3.download(odmFilePath);
 console.log(`Download of ${downloadResults.partCount} parts complete:`, downloadResults.bookPath)
 
-// Cleanup the ODM and License files once the download has completed
+// Use the download results to rename the files consistently
+const renameResults = await overdrive.files.rename(downloadResults.bookMetadata);
+console.log(`Rename of ${renameResults.files.length} files complete:`, renameResults.directory);
+
+// Use the rename results to normalize the ID3 tags
+const tagResults = await overdrive.tags.normalizeTags(renameResults.directory, downloadResults.bookMetadata);
+console.log(`Tagging of ${tagResults.files.length} files complete`, renameResults.directory);
+
 fs.rmSync(downloadResults.odmPath);
 fs.rmSync(downloadResults.licensePath);
