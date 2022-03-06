@@ -25,9 +25,10 @@ export default class OdmDownload {
       throw new Error("Login failed", this.config)
     }
 
-    // Borrow the title
+    // If a title has been specified, go to the holds page
+    // and attempt to automatically borrow the title
     if (title) {
-      const borrowed = await this._borrowTitle(title);
+      await this._borrowTitle(title);
     }
 
     // Get download button for the title on loan
@@ -103,27 +104,33 @@ export default class OdmDownload {
   }
 
   async _borrowTitle(title) {
-    // Navigate to the holds page
-    const holdsUrl = `${this.config.url}/account/holds`;
-    await this.page.goto(holdsUrl, this.pageConfig.goto);
+    try {
+      // Navigate to the holds page
+      const holdsUrl = `${this.config.url}/account/holds`;
+      await this.page.goto(holdsUrl, this.pageConfig.goto);
+    
+      // Find the title
+      const titleElement = await this._getTitle(title);    
 
-    // Find the title
-    const titleElement = await this._getTitle(title);
+      // Get the borrow button
+      const parent1 = await titleElement.getProperty('parentNode');
+      const parent2 = await parent1.getProperty('parentNode');
+      const borrowButton = await parent2.$("button.TitleActionButton");
 
-    // Get the borrow button
-    const parent1 = await titleElement.getProperty('parentNode');
-    const parent2 = await parent1.getProperty('parentNode');
-    const borrowButton = await parent2.$("a.borrowButton");
+      // Borrow the title
+      await borrowButton.click();
 
-    // Borrow the title
-    await borrowButton.click();
+      // Click through the Confirm prompt
+      await this.page.waitForTimeout(100);
+      const borrowPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
+      const confirmButton = await this.page.$("div.reveal-modal button.borrow-button");
+      await confirmButton.click();
+      const borrowResponse = await borrowPromise;
+      return true;
+    } catch (error) {
+      return false;
+    }
 
-    // Click through the Confirm prompt
-    await this.page.waitForTimeout(100);
-    const borrowPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
-    const confirmButton = await this.page.$("div.reveal-modal a.confirm");
-    await confirmButton.click();
-    const borrowResponse = await borrowPromise;
   }
 
   async _getDownloadForTitle(title) {
