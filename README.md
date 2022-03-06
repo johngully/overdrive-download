@@ -47,7 +47,11 @@ odm auto
 ```
 
 ### Example basic download
-This example finds the book by the specified title, and performs the full download process.
+This example finds the book by the specified title, and performs the full download process. 
+
+> **Auto Borrow** 
+>
+> *When a title is specified, the book will automatically borrowed if it is on hold. This simplifies the process when a hold request is filled and an email notification is received that a book is available.*
 ```bash
 odm "The Old Man and the Sea"
 ```
@@ -233,7 +237,7 @@ Patterns use the [javascript template literal](https://developer.mozilla.org/en-
 
 ## Example book metadata structure
 Book metadata can be used set the renaming patterns.  Use the JSON keys in the `directoryPattern` and `filePattern` configuration string to modify the naming process.
-```json
+```js
 {
   "author": "",        // The name of the book author
   "title": "",         // The title of the book
