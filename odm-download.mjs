@@ -124,7 +124,9 @@ export default class OdmDownload {
       await this.page.waitForSelector("div.reveal-modal button.borrow-button");
       const borrowPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
       const confirmButton = await this.page.$("div.reveal-modal button.borrow-button");
-      await confirmButton.click();
+      // The confirmButton is located in a modal dialog.  Use this alternate approach for clicking 
+      // the button since it avoids built-in logic that attempts to scroll the button into view.
+      await confirmButton.evaluate(button => button.click()); 
       const borrowResponse = await borrowPromise;
       return true;
     } catch (error) {
