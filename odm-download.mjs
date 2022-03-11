@@ -121,7 +121,7 @@ export default class OdmDownload {
       await borrowButton.click();
 
       // Click through the Confirm prompt
-      await this.page.waitForTimeout(100);
+      await this.page.waitForSelector("div.reveal-modal button.borrow-button");
       const borrowPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
       const confirmButton = await this.page.$("div.reveal-modal button.borrow-button");
       await confirmButton.click();
