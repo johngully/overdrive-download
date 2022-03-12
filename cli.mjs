@@ -4,6 +4,7 @@ import chalk from "chalk-template";
 import logSymbols from "log-symbols";
 import logUpdate from "log-update";
 import { Command } from "commander";
+import Logger from "./utils/logger.mjs";
 import Config from "./utils/config.mjs";
 import OdmDownload from "./odm-download.mjs";
 import Mp3Download from "./mp3-download.mjs";
@@ -12,7 +13,18 @@ import Mp3Tags from "./mp3-tags.mjs";
 
 const program = new Command();
 const configManager = new Config();
+const logger = new Logger();
 
+// Handle log levels for all commands
+program.on('option:verbose', function () {
+  logger.level = "verbose";
+});
+
+program.on('option:debug', function () {
+  logger.level = "debug";
+});
+
+// Configure error output
 program.configureOutput({
   outputError: (str, write) => write(chalk`{red ${logSymbols.error} ${str}}`)
 });
@@ -22,6 +34,8 @@ program
   .name("odm")
   .description("CLI to download Overdrive audiobooks")
   .argument("<Title of audiobook>", "Title of audiobook on loan")
+  .option("--verbose", "Enable verbose logging")
+  .option("--debug", "Enable debug logging")
   .action(download);
 
 // Download ODM only
@@ -87,37 +101,47 @@ async function download(title) {
   if (title instanceof Object) {
     title = null;
   }
+
+  logger.verbose(`Download - started`, title);
   const odmFilePath = await downloadOdm(title);  
   const downloadResults = await downloadMp3(odmFilePath);
   const renameResults = await rename({ path: downloadResults.bookPath, ...downloadResults.bookMetadata });
   const tagResults = await tag({ path: renameResults.directory, ...downloadResults.bookMetadata });
   
+  logger.verbose(`Download - cleanup`);
   fs.rmSync(downloadResults.odmPath);
   fs.rmSync(downloadResults.licensePath);
+
+  logger.verbose(`Download - completed`);
   return downloadResults;
 }
 
 async function downloadOdm(title) {
+  logger.verbose(`Download Odm - started`, title);
   ensureConfigExists();
   const optionalTitleText = title ? ` (${title})` : ``;
   newStatus(chalk`{blue .odm downloading} {gray ${optionalTitleText}}`, chalk`{blue ◌}`);
   const odm = new OdmDownload();
   const odmFilePath = await odm.download(title);
   updateStatus(chalk`{green .odm download complete} {gray ${optionalTitleText}}`, logSymbols.success);
+  logger.verbose(`Download Odm - completed`);
   return odmFilePath;
 }
 
 async function downloadMp3(odmFilePath) {
+  logger.verbose(`Download Mp3 - started`, odmFilePath);
   ensureConfigExists();
   ensureFileExists(odmFilePath);
   newStatus(chalk`{blue audiobook downloading} {gray (${odmFilePath})}`, chalk`{blue ◌}`);
   const mp3 = new Mp3Download();
   const downloadResults = await mp3.download(odmFilePath);
   updateStatus(chalk`{green audiobook download complete} {gray (${downloadResults.partCount} Parts to "${downloadResults.bookPath}")}`, logSymbols.success);
+  logger.verbose(`Download Mp3 - completed`);
   return downloadResults;
 }
 
 async function rename(options) {
+  logger.verbose(`Rename - started`, options);
   ensureConfigExists();
   newStatus(chalk`{blue audiobook files renaming} {gray (${options.title})}`, chalk`{blue ◌}`);
   const bookMetadata = {
@@ -134,10 +158,12 @@ async function rename(options) {
   const mp3Files = new Mp3Files();
   const renameResults = await mp3Files.rename(bookMetadata, renameOptions);
   updateStatus(chalk`{green audiobook files rename complete} {gray (${renameResults.files.length} files in "${renameResults.directory}")}`, logSymbols.success);
+  logger.verbose(`Rename - completed`);
   return renameResults;
 }
 
 async function tag(options) {
+  logger.verbose(`Tag - started`, options);
   ensureConfigExists();
   newStatus(chalk`{blue audiobook files tagging} {gray (${options.title})}`, chalk`{blue ◌}`);
   const bookPath = options.path;
@@ -155,9 +181,11 @@ async function tag(options) {
   const mp3Tags = new Mp3Tags();
   const tagResults = await mp3Tags.normalizeTags(bookPath, bookMetadata, tagOptions);
   updateStatus(chalk`{green audiobook files tagging complete} {gray (${tagResults.files.length} files in "${bookPath}")}`, logSymbols.success);
+  logger.verbose(`Rename - completed`);
 }
 
 function createConfig(options) {
+  logger.debug(`Create Config - started`);
   const optionsConfig = {
     username: options.username,
     password: options.password,
@@ -167,14 +195,20 @@ function createConfig(options) {
   const existingConfig = configManager.getConfig();
   const newConfig = Object.assign(existingConfig, optionsConfig);
   configManager.saveConfig(newConfig);
+  logger.verbose(`Create Config`, newConfig);
   ensureConfigExists();
+  logger.debug(`Create Config - completed`);
 }
 
 function ensureConfigExists() {
+  logger.debug(`Ensure Config Exists - started`);
   if (!configManager.exists()) {
+    logger.debug(`Ensure Config Exists - Config does not exist`);
     program.showHelpAfterError(chalk`{gray ${logSymbols.info} Try using the following command to create one:\n  {italic odm config -l example-library-name -u example-username -p example-password -dl "./example/dowload/path"}\n}`)
     program.error(chalk`Could not locate a configuration file: {bold ${configManager.configFilePath}}`);
   }
+  logger.debug(`Ensure Config Exists - Config exists`);
+  logger.debug(`Ensure Config Exists - completed`);
 }
 
 function ensureFileExists(filePath) {
@@ -191,5 +225,10 @@ function newStatus(message, icon) {
 
 function updateStatus(message, icon) {
   const value = icon ? `${icon} ${message}` : message;
+  // If the log level is high enough, remove log line updating
+  // so that each log statement is written to a new line
+  if (logger.useLevel(logger.levels.info)) {
+    logUpdate.done();
+  }
   logUpdate(value)
 }
