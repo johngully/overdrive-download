@@ -1,6 +1,9 @@
-import Config from "./utils/config.mjs"
 import puppeteer from "puppeteer";
 import path from "path";
+import Logger from "./utils/logger.mjs";
+import Config from "./utils/config.mjs";
+
+const logger = new Logger();
 
 export default class OdmDownload {
 
@@ -11,9 +14,11 @@ export default class OdmDownload {
     this.configManager = new Config();
     this.config = this.configManager.getConfig();
     this._createDefaultConfig();
+    logger.level = this.config.loglevel;
   }
 
   async download(title) {
+    logger.debug(`OdmDownload.download - started`, title);
     let filePath = "";
 
     // Initialize the browser
@@ -24,11 +29,13 @@ export default class OdmDownload {
     if (!isLoggedIn) {
       throw new Error("Login failed", this.config)
     }
+    logger.info(`Login to overdrive successfull`);
 
     // If a title has been specified, go to the holds page
     // and attempt to automatically borrow the title
     if (title) {
       await this._borrowTitle(title);
+      logger.info(`Book found to be on hold and borrowed successfully: "${title}"`);
     }
 
     // Get download button for the title on loan
@@ -37,9 +44,12 @@ export default class OdmDownload {
     // If there is a download, download the file
     const fileName = await this._downloadOdm(downloadButton);
     filePath = path.join(this.config.basePath, fileName);
+    logger.info(`Download of .odm file successfull: "${filePath}"`);
     
     // Stop the browswer and return the file location
     await this._stopBrowser();
+    logger.verbose(`OdmDownload.download - path to .odm file: "${filePath}"`);
+    logger.debug(`OdmDownload.download - completed`);
     return filePath;
   }
 
@@ -58,10 +68,12 @@ export default class OdmDownload {
   }
 
   async _startBrowser() {
+    logger.debug(`OdmDownload._startBrowser - started`);
     let headless = true;
     if (Object.hasOwn(this.config, "headless")) {
       headless = this.config.headless;
     }
+    logger.debug(`OdmDownload._startBrowser - headless: "${headless}"`);
     
     this.browser = await puppeteer.launch({ headless });
     this.page = await this.browser.newPage();
@@ -76,18 +88,22 @@ export default class OdmDownload {
     // If specified, configure the download path
     if (this.config.basePath) {
       await this.page._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: this.config.basePath});
-    }    
+    }
+    logger.debug(`OdmDownload._startBrowser - completed`);
   }
   
   async _stopBrowser() {
+    logger.debug(`OdmDownload._stopBrowser - started`);
     // Currently the download is not completing before the browser is stopped
     // The 5 second delay has been artificially introduced to handle the problem
     // as a temporary fix, until something better can be added.
     await this.page.waitForTimeout(5000);
     await this.browser.close();
+    logger.debug(`OdmDownload._stopBrowser - completed`);
   }
 
   async _login(username, password) {
+    logger.debug(`OdmDownload._login - started`);
     // Navigate to the login page
     const loginUrl = `${this.config.url}/account/ozone/sign-in`;
     await this.page.goto(loginUrl, this.pageConfig.goto);
@@ -100,10 +116,12 @@ export default class OdmDownload {
     // If the url is the base url, assume the login succeded
     await this.page.waitForNavigation();
     const isLoggedIn = sameUrl(this.page.url(), this.config.url);
+    logger.debug(`OdmDownload._login - completed`);
     return isLoggedIn;
   }
 
   async _borrowTitle(title) {
+    logger.debug(`OdmDownload._borrowTitle - started`);
     try {
       // Navigate to the holds page
       const holdsUrl = `${this.config.url}/account/holds`;
@@ -128,14 +146,17 @@ export default class OdmDownload {
       // the button since it avoids built-in logic that attempts to scroll the button into view.
       await confirmButton.evaluate(button => button.click()); 
       const borrowResponse = await borrowPromise;
+      logger.debug(`OdmDownload._borrowTitle - completed`);
       return true;
     } catch (error) {
+      logger.debug(`OdmDownload._borrowTitle - skipped`);
       return false;
     }
 
   }
 
   async _getDownloadForTitle(title) {
+    logger.debug(`OdmDownload._getDownloadForTitle - started`);
     // Navigate to the loans page
     const loansUrl = `${this.config.url}/account/loans`;
     await this.page.goto(loansUrl, this.pageConfig.goto);
@@ -151,6 +172,7 @@ export default class OdmDownload {
 
     // Expand the accordian so that the download button is clickable
     if (accordianButton) {
+      logger.debug(`OdmDownload._getDownloadForTitle - expanding accordian to show download button`);
       await accordianButton.click(); 
     }
 
@@ -158,10 +180,12 @@ export default class OdmDownload {
     if (!downloadButton) {  
       throw new Error(`The download for: "${title}" could not be found on the Loans page.`)
     }
+    logger.debug(`OdmDownload._getDownloadForTitle - completed`);
     return downloadButton;
   }
 
   async _getTitle(title) {
+    logger.debug(`OdmDownload._getTitle - started`);
     // Find the title element, use the title name if specified
     let titleQuery = `h3[title]`
     if (title) {
@@ -177,11 +201,13 @@ export default class OdmDownload {
     }
     
     // title = await (await titleElement.getProperty("title")).jsonValue();
-    // console.log("Title:", title);
+    // logger.log("Title:", title);
+    logger.debug(`OdmDownload._getTitle - completed`);
     return titleElement;
   }
 
   async _downloadOdm(downloadButton) {
+    logger.debug(`OdmDownload._downloadOdm - started`);
     // Configure the download response handler to catch responses from the library site
     const downloadPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
 
@@ -195,6 +221,7 @@ export default class OdmDownload {
     if (!downloadFileName) {
       throw new Error(`The filename of the .odm could not be determined after download`);
     }
+    logger.debug(`OdmDownload._downloadOdm - completed`, downloadFileName);
     return downloadFileName;
   }
 }

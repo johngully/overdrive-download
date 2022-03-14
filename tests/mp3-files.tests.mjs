@@ -1,4 +1,6 @@
+import Logs from "../utils/logger.mjs";
 import Mp3Files from "../mp3-files.mjs";
+let logger = new Logs("debug");
 
 const bookMetadata = {
   "author": "Ernest Hemingway",
@@ -11,7 +13,7 @@ const bookMetadata = {
 async function test() {
   const files = new Mp3Files();
   const result = await files.rename(bookMetadata);
-  console.log(result);
+  logger.debug(result);
 }
 
 await test();

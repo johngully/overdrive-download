@@ -5,7 +5,10 @@ import path from "path";
 import { v4 as uuidv4 } from 'uuid';
 import { DOMParser } from "@xmldom/xmldom";
 import xpath from "xpath";
-import Config from "./utils/config.mjs"
+import Logger from "./utils/logger.mjs";
+import Config from "./utils/config.mjs";
+
+const logger = new Logger();
 const parser = new DOMParser();
 
 const OMC_VERSION = "1.2.0";
@@ -18,14 +21,17 @@ export default class Mp3Download {
     this.configManager = new Config();
     this.config = this.configManager.getConfig();
     this._createDefaultConfig();
+    logger.level = this.config.loglevel;
   }
 
   async download(odmPath) {
+    logger.debug(`Mp3Download.download - started`, odmPath);
     // Validate odmPath
     if(!fs.existsSync(odmPath)) {
       throw new Error(`The specified .odm cannot be located: ${odmPath}`);
     }
     this.config.basePath = path.dirname(odmPath);
+    logger.verbose(`Mp3Download.download - basePath: "${this.config.basePath}"`);
 
     // Acquire license
     const licensePath = getLicensePath(odmPath);
@@ -33,18 +39,24 @@ export default class Mp3Download {
     if (!license) {
       throw new Error(`License could not be acquired for: ${odmPath}`);
     }
+    logger.info(`License for download acquired successfully`);
 
     // Extract metadata
     const bookMetadata = this.metadata(odmPath);
 
     // Create path
-    const bookPath = this._createPath(this.config.basePath, bookMetadata)
+    const bookPath = this._createPath(this.config.basePath, bookMetadata);
+    logger.info(`Path created for book: "${bookPath}"`);
 
     // Download cover
     const coverResult = await downloadCover(bookMetadata.coverImageUrl, bookPath);
+    logger.info(`Book cover image downloaded successfully: "${coverResult?.filePath}"`);
 
     // Download mp3 parts
     const downloadResults = await downloadParts(odmPath, license, this.config.clientId, bookPath);
+    logger.info(`${downloadResults.length} book parts downloaded successfully`);
+    logger.verbose("Mp3Download.download - results", { bookPath, licensePath, odmPath, partCount: downloadResults.length, bookMetadata, downloadResults });
+    logger.debug(`Mp3Download.download - completed`);
 
     // Return the path to the book
     return { 
@@ -58,6 +70,7 @@ export default class Mp3Download {
   }
 
   metadata(odmPath) {
+    logger.debug(`Mp3Download.metadata - started`);
     // Get the metadata from the CDATA section of the ODM
     const odmString = fs.readFileSync(odmPath).toString();
     const odmXml = parser.parseFromString(odmString);
@@ -71,7 +84,9 @@ export default class Mp3Download {
     metadata.series = xpath.select("string(/Metadata/Series)", metadataXml);
     metadata.description = xpath.select("string(/Metadata/Description)", metadataXml);
     metadata.coverImageUrl = xpath.select("string(/Metadata/CoverUrl)", metadataXml);
-    metadata.partCount = xpath.select("count(/OverDriveMedia/Formats/Format/Parts/Part)", odmXml);  
+    metadata.partCount = xpath.select("count(/OverDriveMedia/Formats/Format/Parts/Part)", odmXml);
+    logger.info(`Metadata parsed from .odm:`, metadata);
+    logger.debug(`Mp3Download.metadata - completed`);
     return metadata;
   }
 
@@ -105,6 +120,7 @@ export default class Mp3Download {
 
 
 async function getLicense(odmPath, licensePath, clientId) {
+  logger.debug(`Mp3Download.getLicense - started`, odmPath, licensePath, clientId);
   // Skip the license acquisition if it already exists
   if (fs.existsSync(licensePath)) {
     const licenseData = readLicenseFromFile(licensePath);
@@ -135,8 +151,10 @@ async function getLicense(odmPath, licensePath, clientId) {
   const url = `${acquisitionUrl}?MediaID=${mediaId}&ClientID=${clientId}&OMC=${OMC_VERSION}&OS=${OS_VERSION}&Hash=${hash}`;
   
   // Get the license and save it to a file
-  const response = await downloadToFile(licensePath, url, { "User-Agent": USER_AGENT })
+  const response = await downloadToFile(licensePath, url, { "User-Agent": USER_AGENT });
   if (response.success) {
+    logger.verbose(`Mp3Download.getLicense - path to license file: "${licensePath}"`);
+    logger.debug(`Mp3Download.getLicense - completed`);
     return readLicenseFromFile(licensePath);
   } else {
     throw new Error(`Failed to acquire License for ${odmPath}`)
@@ -154,6 +172,7 @@ function getLicensePath(odmPath) {
 }
 
 async function downloadParts(odmPath, license, clientId, bookPath) {
+  logger.debug(`Mp3Download.downloadParts - started`);
   const odmString = fs.readFileSync(odmPath).toString();
   const odmXml = parser.parseFromString(odmString);
   // TODO: This query could be problematic if there are multiple format qualities available
@@ -165,10 +184,13 @@ async function downloadParts(odmPath, license, clientId, bookPath) {
     partsResult.push(partResult);
   }
 
+  logger.verbose(`Mp3Download.downloadParts - parts`, partsResult);
+  logger.debug(`Mp3Download.downloadParts - completed`);
   return await partsResult;
 }
 
 async function downloadPart(license, clientId, bookPath, downloadBaseUrl, part) {
+  logger.debug(`Mp3Download.downloadPart - started`);
   const downloadFileName = part.getAttribute("filename");
   const downloadPartName = part.getAttribute("name");
   const downloadPartUrl = `${downloadBaseUrl}/${downloadFileName}`;
@@ -181,10 +203,13 @@ async function downloadPart(license, clientId, bookPath, downloadBaseUrl, part) 
     "User-Agent": USER_AGENT
   };
   const downloadResult = await downloadToFile(filePath, downloadPartUrl, headers);
+  logger.info(`Downloaded: "${filePath}"`);
+  logger.debug(`Mp3Download.downloadPart - completed`);
   return downloadResult;
 }
 
 async function downloadCover(coverImageUrl, bookPath) {
+  logger.debug(`Mp3Download.downloadCover - started`);
   const coverFileExt = path.extname(coverImageUrl);
   const coverFileName = "cover";
   const coverImageName = `${coverFileName}${coverFileExt}`;
@@ -198,10 +223,13 @@ async function downloadCover(coverImageUrl, bookPath) {
 
   // Get the cover image and save it to a file
   const downloadResponse = await downloadToFile(coverImagePath, coverImageUrl, { "User-Agent": USER_AGENT });
+  logger.verbose(`Mp3Download.downloadCover - path to image cover: "${coverImagePath}"`);
+  logger.debug(`Mp3Download.downloadCover - completed`);
   return downloadResponse;
 }
 
 async function downloadToFile(filePath, url, headers) {
+  logger.debug(`Mp3Download.downloadToFile - started`);
   // Skip the download process if the file already exists
   if (fs.existsSync(filePath)) {
     return { success: true, filePath, url, downloadSkipped: true }
@@ -211,10 +239,12 @@ async function downloadToFile(filePath, url, headers) {
     const options = { headers, responseType: "arraybuffer" }
     const response = await axios.get(url, options);
     await fs.promises.writeFile(filePath, response.data);
+    logger.verbose(`Mp3Download.downloadToFile - path to file:`, filePath);
+    logger.debug(`Mp3Download.downloadToFile - completed`);
     return { success: true, filePath, url };
   } catch(error) {
-    console.log(`There was an error downloading: "${url}" to "${filePath}"`);
-    console.log(error);
+    logger.error(`There was an error downloading: "${url}" to "${filePath}"`);
+    logger.error(error);
     return { success: false, filePath, url };
   }
 }

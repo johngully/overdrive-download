@@ -1,4 +1,6 @@
+import Logs from "../utils/logger.mjs";
 import Mp3Tags from "../mp3-tags.mjs";
+let logger = new Logs("debug");
 
 const bookPath = "./downloads/Ernest Hemingway/The Old Man and the Sea";
 const bookMetadata = {
@@ -13,7 +15,7 @@ const options = { titlePattern: "${title} - Part ${trackNumber}" };
 async function test() {
   const tags = new Mp3Tags();
   const result = await tags.normalizeTags(bookPath, bookMetadata, options);
-  console.log(result);
+  logger.debug(result);
 }
 
 await test();

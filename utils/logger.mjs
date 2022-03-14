@@ -27,19 +27,19 @@ export default class Logger {
   }
   
   error(...args) {
-    if (this.levels[this.level] >= this.levels.error) {
+    if (this.useLevel(this.levels.error)) {
       console.error(...args);
     }
   }
 
   warn(...args) {
-    if (this.levels[this.level] >= this.levels.warn) {
+    if (this.useLevel(this.levels.warn)) {
       console.warn(...args);
     }
   }
 
   info(...args) {
-    if (this.levels[this.level] >= this.levels.info) {
+    if (this.useLevel(this.levels.info)) {
       console.log(...args);
     }
   }
@@ -54,6 +54,10 @@ export default class Logger {
     if (this.useLevel(this.levels.debug)) {
       console.debug(...args);
     }
+  }
+
+  validateLevel(levelString) {
+    return !!this.levels[levelString];
   }
 
   levelToInt(levelString) {

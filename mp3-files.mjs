@@ -4,7 +4,10 @@ import path from "path";
 import { isNotJunk } from "junk";
 import { globby } from "globby";
 import fillTemplate from "es6-dynamic-template";
+import Logger from "./utils/logger.mjs";
 import Config from "./utils/config.mjs";
+
+const logger = new Logger();
 
 export default class Mp3Files {
 
@@ -16,11 +19,14 @@ export default class Mp3Files {
     this.configManager = new Config();
     this.config = this.configManager.getConfig();
     this._createDefaultConfig();
+    logger.level = this.config.loglevel;
   }
 
   async rename(bookMetadata, options) {
+    logger.debug(`Mp3Files.rename - started`);
     const renameFilesResult = await this.renameFiles(bookMetadata, options);
     const renameDirectoryResult = await this.renameDirectory(bookMetadata, options);
+    logger.debug(`Mp3Files.rename - completed`);
     return {
       directory: renameDirectoryResult,
       files: renameFilesResult.files,
@@ -29,6 +35,7 @@ export default class Mp3Files {
   }
 
   async renameFiles(bookMetadata, options) {
+    logger.debug(`Mp3Files.renameFiles - started`);
     let { filePattern, directoryPath } = this._getOptionsWithDefaults(options, bookMetadata);
 
     // Get all files in the path
@@ -50,20 +57,26 @@ export default class Mp3Files {
       }
     }
 
+    logger.info(`${renameFilesResult.files.length} files renamed`);
+    logger.debug(`Mp3Files.renameFiles - completed`);
     return renameFilesResult;
   }
 
   async renameDirectory(bookMetadata, options) {
+    logger.debug(`Mp3Files.renameDirectory - started`);
     const { directoryPattern, directoryPath } = this._getOptionsWithDefaults(options, bookMetadata);
     const directoryMetadata = {
       directoryPath,
       basePath: this.config.basePath
     }
     const renamePathResult = await _renamePath(directoryPattern, directoryMetadata, bookMetadata);
+    logger.info(`Path renamed to: "${renamePathResult}"`);
+    logger.debug(`Mp3Files.renameDirectory - completed`);
     return renamePathResult;
   }
 
   _getOptionsWithDefaults(options = {}, bookMetadata) {
+    logger.debug(`Mp3Files._getOptionsWithDefaults - started`);
     let { filePattern, directoryPattern, directoryPath } = options;
     const basePath = path.join(this.config.basePath); // normalize the base path naming
     // Get the default configured values for options if they are not provided
@@ -84,10 +97,13 @@ export default class Mp3Files {
       }
     }
 
+    logger.verbose(`Mp3Files._getOptionsWithDefaults - options with defaults:`, { filePattern, directoryPattern, directoryPath });
+    logger.debug(`Mp3Files._getOptionsWithDefaults - completed`);
     return { filePattern, directoryPattern, directoryPath };
   }
 
   _createDefaultConfig() {
+    logger.debug(`Mp3Files._createDefaultConfig - started`);
     let configChanged = false;
     if (!this.config.directoryPattern) {
       this.config.directoryPattern = this.directoryPattern;
@@ -100,19 +116,29 @@ export default class Mp3Files {
     }
   
     if (configChanged) {
+      logger.verbose(`Mp3Files._createDefaultConfig - config saved`);
+      logger.debug(this.config);
       this.configManager.saveConfig(this.config);
     }
+    logger.debug(`Mp3Files._createDefaultConfig - completed`);
   }
 }
 
 function _renameFile(filePattern, fileMetadata, bookMetadata) {
+  logger.debug(`Mp3Files._renameFile - started`);
   const fileName = _getFileName(filePattern, fileMetadata, bookMetadata);
   const filePath = path.join(fileMetadata.directoryPath, fileName)
   fs.renameSync(fileMetadata.filePath, filePath);
+  logger.info(`Renamed to: "${filePath}"`);
+  logger.verbose(`Mp3Files._renameFile - file renamed`);
+  logger.verbose(`  from: "${fileMetadata.filePath}"`);
+  logger.verbose(`  to:   "${filePath}"`);
+  logger.debug(`Mp3Files._renameFile - completed`);
   return filePath;
 }
 
 async function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
+  logger.debug(`Mp3Files._renamePath - started`);
   const values = { ...bookMetadata, ...directoryMetadata };
   const oldDirectoryPath = path.join(values.directoryPath); // Normalize the old directory path naming
 
@@ -132,6 +158,9 @@ async function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
   // Move the files to the new path
   await fse.mkdirs(newDirectoryPath);
   fs.renameSync(oldDirectoryPath, newDirectoryPath);
+  logger.verbose(`Mp3Files._renamePath - path renamed`);
+  logger.verbose(`  from: "${oldDirectoryPath}"`);
+  logger.verbose(`  to:   "${newDirectoryPath}"`);
 
   // If empty remove original directory structure
   const titlePath = values.directoryPath;
@@ -139,10 +168,12 @@ async function _renamePath(directoryPattern, directoryMetadata, bookMetadata) {
   _removeEmptyDirectory(titlePath);
   _removeEmptyDirectory(authorPath);
 
+  logger.debug(`Mp3Files._renamePath - completed`);
   return newDirectoryPath;
 }
 
 function _removeEmptyDirectory(directoryPath) {
+  logger.debug(`Mp3Files._removeEmptyDirectory - started`);
   if (!fs.existsSync(directoryPath)) {
     return;
   }
@@ -151,21 +182,29 @@ function _removeEmptyDirectory(directoryPath) {
   const directoryContents = fs.readdirSync(directoryPath).filter(isNotJunk);
   if (directoryContents.length === 0) {
     fs.rmSync(directoryPath, { recursive: true })
+    logger.verbose(`Mp3Files._removeEmptyDirectory - directory removed: "${directoryPath}"`);  
   }
+  logger.debug(`Mp3Files._removeEmptyDirectory - completed`);
 }
 
 function _getFileMetadata(filePath) {
+  logger.debug(`Mp3Files._getFileMetadata - started`);
   const directoryPath = path.dirname(filePath);
   const fileExtension = path.extname(filePath);
   const fileName = path.basename(filePath, fileExtension);
   const trackNumber = fileName.replace(/.*\D(\d+)\D*/, "$1"); // Gets the last number in the fileName string
+  logger.verbose(`Mp3Files._getFileMetadata - metadata:`, { directoryPath, fileExtension, fileName, filePath, trackNumber });
+  logger.debug(`Mp3Files._getFileMetadata - completed`);
   return { directoryPath, fileExtension, fileName, filePath, trackNumber };
 }
 
 function _getFileName(filePattern, fileMetadata, bookMetadata) {
+  logger.debug(`Mp3Files._getFileName - started`);
   // Create the new file naming structure based upon the filePattern
   const values = { ...bookMetadata, ...fileMetadata };
   values.trackNumber = fileMetadata.trackNumber.padStart(bookMetadata.partCount.toString().length, "0"); // Pad the trackNumber with leading 0's
   const fileName = fillTemplate(filePattern, values);
+  logger.verbose(`Mp3Files._getFileName - fileName: "${fileName}"`);
+  logger.debug(`Mp3Files._getFileName - completed`);
   return fileName;
 }

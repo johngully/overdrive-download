@@ -82,6 +82,13 @@ This example renames all the files in the `./downloads/Ernest Hemingway/The Old 
 odm rename --author "Ernest Hemingway" --title "The Old Man and the Sea" --path "./downloads/Ernest Hemingway/The Old Man and the Sea" --directoryPattern "${author} - ${title}" --filePattern "Part ${trackNumber}${fileExtension}"
 ```
 
+### Example run with logging
+This example performs the full download process while logging addition information to the terminal. This option may be useful while diagnosing problems with the download.
+
+```bash
+odm "The Old Man and the Sea" --verbose
+```
+
 # Package usage
 The project is currently designed to simplify the workflow of downloading audiobooks from your local Overdrive library. The project currently supports four primary functions.
 * Downloading the the `.odm` file and acquiring the appropriate licenses
