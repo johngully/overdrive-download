@@ -14,6 +14,7 @@
   "author": "John Gully",
   "license": "MIT",
   "dependencies": {
+    "@jsbits/get-package-version": "^1.0.3",
     "@xmldom/xmldom": "^0.8.1",
     "axios": "^0.26.0",
     "chalk-template": "^0.4.0",

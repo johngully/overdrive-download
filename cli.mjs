@@ -4,6 +4,7 @@ import chalk from "chalk-template";
 import logSymbols from "log-symbols";
 import logUpdate from "log-update";
 import { Command } from "commander";
+import getPackageVersion from "@jsbits/get-package-version";
 import Logger from "./utils/logger.mjs";
 import Config from "./utils/config.mjs";
 import OdmDownload from "./odm-download.mjs";
@@ -77,7 +78,7 @@ program
   .option("-l --library <string>", "Name of the library")
   .option("-u --username <string>", "Username`")
   .option("-p --password <string>", "Password`")
-  .option("-dl --download <string>", "Base path for downloads")
+  .option("-dl --download <string>", "Base path for downloads")  
   .action(createConfig);
 
 // Configure error output
@@ -102,6 +103,20 @@ program.on("option:loglevel", function (value) {
   logger.level = value;
   setConfigLogLevel(value);
 });
+
+async function addHelpText(foo) {
+  const version = getPackageVersion();
+  const config = configManager.getConfig();
+  const configFilePath = configManager.configFilePath;
+  program.addHelpText('afterAll', `
+
+Config Location: "${configFilePath}"
+Configuration:
+${JSON.stringify(config, null, 2)}
+
+Overdrive Download: v${version}
+`);
+}
 
 async function cleanup() {
   // Reset the loglevel back to the original value after execution
@@ -254,11 +269,14 @@ function setConfigLogLevel(level) {
   configManager.saveConfig();
 }
 
-// Run the program, and cleanup
-try {
-  await program.parseAsync();
-} finally {
-  await cleanup();
+async function runProgram () {
+  // Run the program, and cleanup
+  try {
+    addHelpText();
+    await program.parseAsync();
+  } finally {
+    await cleanup();
+  }
 }
 
-
+await runProgram();
