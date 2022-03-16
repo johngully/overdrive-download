@@ -126,25 +126,31 @@ export default class OdmDownload {
       // Navigate to the holds page
       const holdsUrl = `${this.config.url}/account/holds`;
       await this.page.goto(holdsUrl, this.pageConfig.goto);
+      logger.debug(`OdmDownload._borrowTitle - Holds page loaded`);
     
       // Find the title
       const titleElement = await this._getTitle(title);    
+      logger.debug(`OdmDownload._borrowTitle - Title found`);
 
       // Get the borrow button
       const parent1 = await titleElement.getProperty('parentNode');
       const parent2 = await parent1.getProperty('parentNode');
       const borrowButton = await parent2.$("button.TitleActionButton");
+      logger.debug(`OdmDownload._borrowTitle - Borrow button found`);
 
       // Borrow the title
       await borrowButton.click();
+      logger.debug(`OdmDownload._borrowTitle - Borrow button clicked`);
 
       // Click through the Confirm prompt
       await this.page.waitForSelector("div.reveal-modal button.borrow-button");
       const borrowPromise = this.page.waitForResponse(response => response.url().startsWith(this.config.url));
       const confirmButton = await this.page.$("div.reveal-modal button.borrow-button");
+      logger.debug(`OdmDownload._borrowTitle - Confirm button found`);
       // The confirmButton is located in a modal dialog.  Use this alternate approach for clicking 
       // the button since it avoids built-in logic that attempts to scroll the button into view.
-      await confirmButton.evaluate(button => button.click()); 
+      await confirmButton.evaluate(button => button.click());
+      logger.debug(`OdmDownload._borrowTitle - Confirm button clicked`);
       const borrowResponse = await borrowPromise;
       logger.debug(`OdmDownload._borrowTitle - completed`);
       return true;
