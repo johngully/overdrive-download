@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node index.mjs",
     "test": "node tests/index.tests.mjs",
+    "server": "node web/server.mjs",
     "np": "npx np"
   },
   "author": "John Gully",
@@ -21,7 +22,9 @@
     "commander": "^9.0.0",
     "convict": "^6.2.1",
     "convict-format-with-validator": "^6.2.0",
+    "cors": "^2.8.5",
     "es6-dynamic-template": "^2.0.0",
+    "express": "^4.17.3",
     "fs-extra": "^10.0.1",
     "globby": "^13.1.1",
     "junk": "^4.0.0",
