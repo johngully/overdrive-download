@@ -34,8 +34,10 @@ export default class OdmDownload {
     // If a title has been specified, go to the holds page
     // and attempt to automatically borrow the title
     if (title) {
-      await this._borrowTitle(title);
-      logger.info(`Book found to be on hold and borrowed successfully: "${title}"`);
+      const borrowed = await this._borrowTitle(title);
+      if (borrowed) {
+        logger.info(`Book found to be on hold and borrowed successfully: "${title}"`);
+      }
     }
 
     // Get download button for the title on loan
