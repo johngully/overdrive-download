@@ -1,0 +1,5 @@
+.vscode
+downloads
+node_modules
+tests
+npm-debug.log

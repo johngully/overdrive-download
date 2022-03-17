@@ -10,6 +10,8 @@
     "start": "node index.mjs",
     "test": "node tests/index.tests.mjs",
     "server": "node web/server.mjs",
+    "docker-build": "docker build . -t johngully/overdrivedownload",
+    "docker-server": "docker run -p7979:7979 -d johngully/overdrivedownload",
     "np": "npx np"
   },
   "author": "John Gully",

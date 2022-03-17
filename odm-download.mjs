@@ -62,7 +62,7 @@ export default class OdmDownload {
     }
     logger.debug(`OdmDownload._startBrowser - headless: "${headless}"`);
     
-    this.browser = await puppeteer.launch({ headless });
+    this.browser = await puppeteer.launch({ headless, args: ["--no-sandbox"] });
     this.page = await this.browser.newPage();
 
     // Configure the browser so that the download button is displayed
