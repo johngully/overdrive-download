@@ -1,0 +1,21 @@
+{
+  "server": {
+    "port": {
+      "doc": "The port the webserver will run on",
+      "format": "port",
+      "default": "80",
+      "env": "ODM_SERVER_PORT"
+    }
+  }
+}
+
+  // Consider using a pattern to find all the .schema files
+  // const internalSchema = getJsonFromFile("./utils/configurationInternal.schema.json");
+  // const configSchema = getJsonFromFile("./utils/configuration.schema.json");
+  // const serverSchema = getJsonFromFile("./utils/configurationServer.schema.json");
+
+  // return {
+  //   ...internalSchema,
+  //   ...configSchema,
+  //   ...serverSchema
+  // }
