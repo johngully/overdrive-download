@@ -1,0 +1,53 @@
+{
+  "libraryName": {
+    "doc": "The name of the library that is associated with Overdrive",
+    "format": "String",
+    "default": null,
+    "nullable": true,
+    "env": "ODM_LIBRARY"
+  }, 
+  "username": {
+    "doc": "The username used to login to the Overdrive library website",
+    "format": "String",
+    "default": null,
+    "nullable": true,
+    "env": "ODM_USERNAME"
+  }, 
+  "password": {
+    "doc": "The password used to login to the Overdrive library website",
+    "format": "String",
+    "default": null,
+    "nullable": true,
+    "env": "ODM_PASSWORD"
+  }, 
+  "basePath": {
+    "doc": "Base path for downloads",
+    "format": "String",
+    "default": "./",
+    "env": "ODM_BASE_PATH"
+  }, 
+  "directoryPattern": {
+    "doc": "The pattern used to name the directories that will contain the audiobook files",
+    "format": "String",
+    "default": "${author}/${title}",
+    "env": "ODM_DIRECTORY_PATTERN"
+  }, 
+  "filePattern": {
+    "doc": "The pattern used to name the audiobook files",
+    "format": "String",
+    "default": "${title} - Part ${trackNumber}${fileExtension}",
+    "env": "ODM_FILE_PATTERN"
+  }, 
+  "titlePattern": {
+    "doc": "The pattern used to format the title tag during ID3 tag normalization",
+    "format": "String",
+    "default": "${title} - Part ${trackNumber}",
+    "env": "ODM_TITLE_PATTERN"
+  },
+  "loglevel": {
+    "doc": "The log level used to specify the logging granularity",
+    "format": ["error", "warn", "info", "verbose", "debug", 0, 1, 2, 3, 4, 5 ],
+    "default": "warn",
+    "env": "ODM_LOG_LEVEL"
+  }
+}

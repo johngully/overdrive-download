@@ -1,7 +1,7 @@
 import puppeteer from "puppeteer";
 import path from "path";
 import Logger from "./utils/logger.mjs";
-import Config from "./utils/config.mjs";
+import Configuration from "./utils/configuration.mjs";
 
 const logger = new Logger();
 
@@ -11,9 +11,8 @@ export default class OdmDownload {
     this.browser;
     this.page;
     this.pageConfig = { goto: { waitUntil: "networkidle2" } };
-    this.configManager = new Config();
-    this.config = this.configManager.getConfig();
-    this._createDefaultConfig();
+    this.configuration = new Configuration();
+    this.config = this.configuration.load();
     logger.level = this.config.loglevel;
   }
 
@@ -53,20 +52,6 @@ export default class OdmDownload {
     logger.verbose(`OdmDownload.download - path to .odm file: "${filePath}"`);
     logger.debug(`OdmDownload.download - completed`);
     return filePath;
-  }
-
-  _createDefaultConfig() {
-    if (!this.config.basePath) {
-      this.config.basePath = "./"
-    }
-  
-    if (!this.config.urlBase) {
-      this.config.urlBase = "overdrive.com"
-    }
-    this.config.urlBase = "overdrive.com";
-    this.config.url = `https://${this.config.libraryName}.${this.config.urlBase}`;
-
-    this.configManager.saveConfig(this.config);
   }
 
   async _startBrowser() {

@@ -6,16 +6,17 @@ import logUpdate from "log-update";
 import { Command } from "commander";
 import getPackageVersion from "@jsbits/get-package-version";
 import Logger from "./utils/logger.mjs";
-import Config from "./utils/config.mjs";
+import Configuration from "./utils/configuration.mjs";
 import OdmDownload from "./odm-download.mjs";
 import Mp3Download from "./mp3-download.mjs";
 import Mp3Files from "./mp3-files.mjs";
 import Mp3Tags from "./mp3-tags.mjs";
 
 const program = new Command();
-const configManager = new Config();
-const logger = new Logger();
-let _previousLogLevel;
+const configuration = new Configuration();
+const config = configuration.load();
+const logger = new Logger(config.loglevel);
+const _originalLogLevel = config.loglevel;;
 
 // Download
 program
@@ -106,13 +107,13 @@ program.on("option:loglevel", function (value) {
 
 async function addHelpText(foo) {
   const version = getPackageVersion();
-  const config = configManager.getConfig();
-  const configFilePath = configManager.configFilePath;
+  const formattedConfig = JSON.stringify(config, null, 2);
+  const configFilePath = configuration.currentConfigFile;
   program.addHelpText('afterAll', `
 
 Config Location: "${configFilePath}"
 Configuration:
-${JSON.stringify(config, null, 2)}
+${formattedConfig}
 
 Overdrive Download: v${version}
 `);
@@ -120,7 +121,7 @@ Overdrive Download: v${version}
 
 async function cleanup() {
   // Reset the loglevel back to the original value after execution
-  setConfigLogLevel(_previousLogLevel);
+  setConfigLogLevel(_originalLogLevel);
 }
 
 async function download(title) {
@@ -211,27 +212,23 @@ async function tag(options) {
   logger.debug(`odm tag - completed`);
 }
 
-function createConfig(options) {
+async function createConfig(options) {
   logger.debug(`odm config - started`);
-  const optionsConfig = {
-    username: options.username,
-    password: options.password,
-    basePath: options.download,
-    libraryName: options.library
-  }
-  const existingConfig = configManager.getConfig();
-  const newConfig = Object.assign(existingConfig, optionsConfig);
-  configManager.saveConfig(newConfig);
+  setConfigValue("username", options.username);
+  setConfigValue("password", options.password);
+  setConfigValue("basePath", options.basePath);
+  setConfigValue("libraryName", options.libraryName);
+  configuration.save();
   ensureConfigExists();
-  logger.debug(newConfig);
+  logger.debug(configuration.get());
   logger.debug(`odm config - completed`);
 }
 
 function ensureConfigExists() {
-  if (!configManager.exists()) {
+  if (!configuration.exists()) {
     logger.debug(`Ensure Config Exists - Config does not exist`);
     program.showHelpAfterError(chalk`{gray ${logSymbols.info} Try using the following command to create one:\n  {italic odm config -l example-library-name -u example-username -p example-password -dl "./example/dowload/path"}\n}`)
-    program.error(chalk`Could not locate a configuration file: {bold ${configManager.configFilePath}}`);
+    program.error(chalk`Could not locate a configuration file: {bold ${configuration.currentConfigFile}}`);
   }
 }
 
@@ -257,16 +254,15 @@ function updateStatus(message, icon) {
   logUpdate(value)
 }
 
-function setConfigLogLevel(level) {
-  const config = configManager.getConfig();
-  _previousLogLevel = config.loglevel;
-  if (level) {
-    config.loglevel = level;
-  } else {
-    delete config.loglevel;
+function setConfigValue(key, value) {
+  if (value !== null && value !== undefined) {
+    configuration.set(key, value);
   }
-  
-  configManager.saveConfig();
+}
+
+function setConfigLogLevel(level = "warn") {
+  configuration.set("loglevel", level);
+  configuration.save();
 }
 
 async function runProgram () {

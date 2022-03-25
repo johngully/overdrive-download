@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DOMParser } from "@xmldom/xmldom";
 import xpath from "xpath";
 import Logger from "./utils/logger.mjs";
-import Config from "./utils/config.mjs";
+import Configuration from "./utils/configuration.mjs";
 
 const logger = new Logger();
 const parser = new DOMParser();
@@ -18,9 +18,8 @@ const USER_AGENT = "OverDrive Media Console";
 export default class Mp3Download {
 
   constructor() {
-    this.configManager = new Config();
-    this.config = this.configManager.getConfig();
-    this._createDefaultConfig();
+    this.configuration = new Configuration();
+    this.config = this.configuration.load();
     logger.level = this.config.loglevel;
   }
 
@@ -88,18 +87,6 @@ export default class Mp3Download {
     logger.info(`Metadata parsed from .odm:`, metadata);
     logger.debug(`Mp3Download.metadata - completed`);
     return metadata;
-  }
-
-  _createDefaultConfig() {
-    if (!this.config.clientId) {
-      this.config.clientId = uuidv4();
-    }
-
-    if (!this.config.basePath) {
-      this.config.basePath = "./"
-    }
-  
-    this.configManager.saveConfig(this.config);
   }
 
   _getBasePathFromFile(path) {

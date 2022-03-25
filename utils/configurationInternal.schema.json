@@ -1,0 +1,20 @@
+{
+  "urlBase": {
+    "doc": "(internal) The internet domain used by Overdrive",
+    "format": "String",
+    "default": "overdrive.com"
+  }, 
+  "url": {
+    "doc": "(internal) The fully qualified url used for the Overdrive library",
+    "format": "url",
+    "default": null,
+    "nullable": true
+  }, 
+  "clientId": {
+    "doc": "(internal) The unique id generated for this download client",
+    "format": "String",
+    "default": null,
+    "nullable": true,
+    "env": "ODM_CLIENT_ID"
+  }
+}

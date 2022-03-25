@@ -3,7 +3,7 @@ import { globby } from "globby";
 import fillTemplate from "es6-dynamic-template";
 import NodeID3 from "node-id3";
 import Logger from "./utils/logger.mjs";
-import Config from "./utils/config.mjs";
+import Configuration from "./utils/configuration.mjs";
 
 const logger = new Logger();
 
@@ -19,9 +19,8 @@ export default class Mp3Tags {
   }
 
   constructor() {
-    this.configManager = new Config();
-    this.config = this.configManager.getConfig();
-    this._createDefaultConfig();
+    this.configuration = new Configuration();
+    this.config = this.configuration.load();
     logger.level = this.config.loglevel;
   }
 
@@ -78,19 +77,6 @@ export default class Mp3Tags {
     logger.verbose(`Mp3Tags.mapMetadataToID3Tags - tags:`, tags);
     logger.debug(`Mp3Tags.mapMetadataToID3Tags - started`);
     return tags;
-  }
-
-  _createDefaultConfig() {
-    let configChanged = false;
-
-    if (!this.config.titlePattern) {
-      this.config.titlePattern = this.titlePattern;
-      configChanged = true;
-    }
-    
-    if (configChanged) {
-      this.configManager.saveConfig(this.config);
-    }
   }
 }
 
