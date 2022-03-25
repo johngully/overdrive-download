@@ -5,20 +5,17 @@ import { isNotJunk } from "junk";
 import { globby } from "globby";
 import fillTemplate from "es6-dynamic-template";
 import Logger from "./utils/logger.mjs";
-import Config from "./utils/config.mjs";
+import Configuration from "./utils/configuration.mjs";
 
 const logger = new Logger();
 
 export default class Mp3Files {
 
-  directoryPattern = "${author}/${title}";
-  filePattern = "${title} - Part ${trackNumber}${fileExtension}";
   filesGlobPattern = "**{.mp3,.aac}";
 
   constructor() {
-    this.configManager = new Config();
-    this.config = this.configManager.getConfig();
-    this._createDefaultConfig();
+    this.configuration = new Configuration();
+    this.config = this.configuration.load();
     logger.level = this.config.loglevel;
   }
 
@@ -100,27 +97,6 @@ export default class Mp3Files {
     logger.verbose(`Mp3Files._getOptionsWithDefaults - options with defaults:`, { filePattern, directoryPattern, directoryPath });
     logger.debug(`Mp3Files._getOptionsWithDefaults - completed`);
     return { filePattern, directoryPattern, directoryPath };
-  }
-
-  _createDefaultConfig() {
-    logger.debug(`Mp3Files._createDefaultConfig - started`);
-    let configChanged = false;
-    if (!this.config.directoryPattern) {
-      this.config.directoryPattern = this.directoryPattern;
-      configChanged = true;
-    }
-  
-    if (!this.config.filePattern) {
-      this.config.filePattern = this.filePattern;
-      configChanged = true;
-    }
-  
-    if (configChanged) {
-      logger.verbose(`Mp3Files._createDefaultConfig - config saved`);
-      logger.debug(this.config);
-      this.configManager.saveConfig(this.config);
-    }
-    logger.debug(`Mp3Files._createDefaultConfig - completed`);
   }
 }
 

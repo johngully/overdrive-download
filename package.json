@@ -19,6 +19,8 @@
     "axios": "^0.26.0",
     "chalk-template": "^0.4.0",
     "commander": "^9.0.0",
+    "convict": "^6.2.1",
+    "convict-format-with-validator": "^6.2.0",
     "es6-dynamic-template": "^2.0.0",
     "fs-extra": "^10.0.1",
     "globby": "^13.1.1",
