@@ -17,7 +17,7 @@
     "docker-down": "docker-compose down --volumes",
     "dp": "npm run docker-build && npm run docker-tag && npm run docker-publish",
     "np": "npx np",
-    "publish": "npm run np && npm run dp"
+    "publish-all": "npm run np && npm run dp"
   },
   "author": "John Gully",
   "license": "MIT",
