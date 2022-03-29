@@ -17,7 +17,7 @@ To get started simply install the command using `npm`, create a configuration fi
 ### Quickstart Commands
 ```bash
 npm install -g overdrivedownload
-odm config -l example-library-name -u example-username -p example-password -dl "./example/dowload/path"
+odm config -l example-library-name -u example-username -p example-password -dl "./example/download/path"
 odm "Title of book"
 ```
 ### Example 
@@ -89,8 +89,61 @@ This example performs the full download process while logging addition informati
 odm "The Old Man and the Sea" --verbose
 ```
 
+# Web Server
+This project includes a simple webserver that hosts a basic user interfact that can be used to perform basic operations remotely, without the need for SSH access to the terminal. 
+
+In addition to the code to run the server directly, the basics for a docker container have been included to simplify the entire process of running the server.
+
+Once the server is up and running use a web browser to visit `http://example-server-name` and enter the name of the book you would like to download.  If you have borrowed the title, the audiobook will be downloaded to the configured path.
+
+### Docker Quickstart Command
+```
+docker run -d -p 80:80 --mount type=bind,source=/example/download/path,target=/usr/download -e ODM_LIBRARY=example-library-name -e ODM_USERNAME=example-username -e ODM_PASSWORD=example-password johngully/overdrive-download
+```
+
+### Docker Compose 
+
+The easiest way to configure and run the web server is using docker-compose.  Begin by creating a `docker-compose.yml` and configuring the local volume where downloads will be stored, as well as the Overdrive library credentials.
+
+Template `docker-compose.yml`
+```yml
+version: "3.9"
+services:
+  server:
+    image: johngully/overdrive-download
+    ports:
+      - 80:80
+    volumes:
+      - ./downloads:/usr/downloads # local-path:docker-contaier-path
+    environment:
+      - ODM_LIBRARY=  # Library name
+      - ODM_USERNAME= # Overdrive username
+      - ODM_PASSWORD= # Overdrive password
+```
+
+### Docker compose command
+``` bash
+docker-compose up -d
+```
+
+### Example doccker compose configuration
+```yml
+version: "3.9"
+services:
+  server:
+    image: johngully/overdrive-download
+    ports:
+      - 7979:80
+    volumes:
+      - /usr/downloads/audiobooks:/usr/downloads
+    environment:
+      - ODM_LIBRARY=nypl
+      - ODM_USERNAME=123456
+      - ODM_PASSWORD=abcdef
+```
+
 # Package usage
-The project is currently designed to simplify the workflow of downloading audiobooks from your local Overdrive library. The project currently supports four primary functions.
+The project is currently designed to simplify the workflow of downloading audiobooks from your local Overdrive library and currently supports four primary functions.
 * Downloading the the `.odm` file and acquiring the appropriate licenses
 * Downloading the `.mp3` audiobook files
 * Renaming the files and directories in a format of your choosing
