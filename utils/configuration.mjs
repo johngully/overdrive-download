@@ -75,10 +75,12 @@ function getSchemas() {
   // Consider using a pattern to find all the .schema files
   const internalSchema = getJsonFromFile("./utils/configurationInternal.schema.json");
   const configSchema = getJsonFromFile("./utils/configuration.schema.json");
+  const serverSchema = getJsonFromFile("./utils/configurationServer.schema.json");
 
   return {
     ...internalSchema,
-    ...configSchema
+    ...configSchema,
+    ...serverSchema
   }
 }
 

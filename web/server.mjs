@@ -2,6 +2,7 @@ import express, { json } from "express";
 import cors from "cors";
 import path from "path";
 import { URL } from "url";
+import Configuration from "../utils/configuration.mjs";
 import OverdriveDownload from "../index.mjs";
 
 // NOTES: 
@@ -11,7 +12,9 @@ import OverdriveDownload from "../index.mjs";
 // const odmMocks = new OverdriveDownloadMocks();
 // odmMocks.mock(OverdriveDownload);
 
-const PORT = process.env.OVERDRIVE_DOWNLOAD_PORT || 7979;
+const configuration = new Configuration();
+const config = configuration.load();
+const PORT = config.server.port;
 const __filename = new URL("", import.meta.url).pathname;
 const __dirname = new URL(".", import.meta.url).pathname; // Will contain trailing slash
 
@@ -41,4 +44,4 @@ app.get("/download", async (request, response) => {
 });
 
 // Start the web server on the specified port
-app.listen(PORT, () => console.log(`App listening at port ${PORT}`));
+app.listen(PORT, () => console.log(`Overdrive Download server listening on port: ${PORT}`));

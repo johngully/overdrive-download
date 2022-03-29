@@ -13,6 +13,10 @@ RUN apk add --no-cache chromium
 
 # Create app directory
 WORKDIR /usr/src/app
+# Create the download directory and store it as the 
+# default value for the ODM_BASE_PATH environment variable 
+RUN mkdir -p /usr/downloads
+ENV ODM_BASE_PATH=/usr/downloads
 
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
@@ -23,5 +27,5 @@ RUN npm install
 # Bundle app source
 COPY . .
 
-EXPOSE 7979
+EXPOSE 80
 CMD [ "npm", "run", "server" ]

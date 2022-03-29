@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  server:
+    image: johngully/overdrive-download
+    ports:
+      - 80:80
+    volumes:
+      - ./downloads:/usr/downloads
+    environment:
+      - ODM_LIBRARY=  # Library name
+      - ODM_USERNAME= # Overdrive username
+      - ODM_PASSWORD= # Overdrive password
