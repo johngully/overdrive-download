@@ -10,9 +10,14 @@
     "start": "node index.mjs",
     "test": "node tests/index.tests.mjs",
     "server": "node web/server.mjs",
-    "docker-build": "docker build . -t johngully/overdrivedownload",
-    "docker-server": "docker run -p7979:7979 -d johngully/overdrivedownload",
-    "np": "npx np"
+    "docker-build": "docker build . -t johngully/overdrive-download",
+    "docker-tag": "docker tag johngully/overdrive-download johngully/overdrive-download:v$npm_package_version",
+    "docker-publish": "docker push johngully/overdrive-download:v$npm_package_version",
+    "docker-up": "docker-compose up -d",
+    "docker-down": "docker-compose down --volumes",
+    "dp": "npm run docker-build && npm run docker-tag && npm run docker-publish",
+    "np": "npx np",
+    "publish": "npm run np && npm run dp"
   },
   "author": "John Gully",
   "license": "MIT",
