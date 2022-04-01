@@ -18,7 +18,7 @@
       event.preventDefault();
       state.title = document.getElementById("title").value;
       stateMachine.downloading(state);
-      const response = await fetch(`/download?title=${state.title}`);
+      const response = await fetch(`./download?title=${state.title}`);
       const json = await response.json();
       state.book = json.book;
       stateMachine.downloadComplete(state);
