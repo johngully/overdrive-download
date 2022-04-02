@@ -1,15 +1,22 @@
 FROM node:17-alpine
 
-## -- ARM 64 -- 
-## The following configuration ensures that puppeteer work on ARM64 devices
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETARCH
+ARG TARGETVARIANT
+RUN echo "Running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
 
-# Skip Chromium download as part of npm install
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-# Install it manually using the native package manager `apk`
-RUN apk add --no-cache chromium
+RUN apk update && \
+    apk add --no-cache \
+      chromium \
+      nss \
+      freetype \
+      harfbuzz \
+      ca-certificates \
+      ttf-freefont
 
-## -- ARM 64 --
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Create app directory
 WORKDIR /usr/src/app
