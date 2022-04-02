@@ -35,4 +35,4 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: user/app:latest
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/overdrive-download:latest
