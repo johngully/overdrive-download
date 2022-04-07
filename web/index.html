@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Overdrive Download</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div class="container mx-auto">
+    <div id="app"></div>
+  </div>
+  <script type="module">
+    import { createApp, reactive } from "vue";
+
+    const sleep = m => new Promise(r => setTimeout(r, m))
+    const mockBooks = [
+      {"title":"The Old Man and the Sea", "author":"Ernest Hemingway", "coverUrl":"https://img1.od-cdn.com/ImageType-100/0439-1/%7B06943DC2-CEDE-474C-8736-583CB22AC260%7DImg100.jpg", "onHold":true},
+      {"title":"Little House in the Big Woods", "author":"Laura Ingalls Wilder", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0293-1%2F%257B8E616136-4AE4-4283-A363-359A90E295F9%257DImg100.jpg&stripmeta=true&width=150", "onHold":true},
+      {"title":"Argo", "author":"Antonio J. Mendez", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0887-1%2F%257BEACC3B52-1935-4289-8F33-BD3F57A25785%257DImg100.jpg&stripmeta=true&width=150", "onLoan":true},
+      {"title":"Death on the Nile", "author":"Agatha Christie", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0293-1%2F%257BA8A4231E-A0D7-4F6F-A1D2-CFBB20A5FFA0%257DImg100.jpg&stripmeta=true&width=150", "onLoan":true},
+    ];
+
+    const store = reactive({
+      status: null,
+      selectedBook: null,
+      books: [],
+      get isError() {
+        return this.status === "error";
+      },
+      set isError(value) {
+        this.status = value ? "error" : null;
+      },
+      get isDownloading() {
+        return this.status === "downloading";
+      },
+      set isDownloading(value) {
+        this.status = value ? "downloading" : null;
+      },
+      get isLoading() {
+        return this.status === "loading";
+      },
+      set isLoading(value) {
+        this.status = value ? "loading" : null;
+      },
+      async loadBooks() {
+        try {
+          this.isLoading = true;
+          // await sleep(500);
+          // const books = mockBooks;
+          const response = await fetch(`./books`);
+          const books = await response.json();
+          books.forEach(book => {
+            book.coverUrl = book.coverUrl.replace("&width=150", "&width=256");
+          });
+          this.books.push(...books);
+        } catch(error) {
+          this.isError = true;
+        } finally {
+          this.isLoading = false;
+        }
+      },
+      async downloadBook(book) {
+        try {
+          this.isDownloading = true;
+          this.selectedBook = book;
+          const response = await fetch(`./download?title=${book.title}`);
+          const json = await response.json();
+          book.downloaded = true;
+          console.log("Download complete");
+          console.log(json.book);
+        } catch (error) {
+          this.isError = true;
+        } finally {
+          this.isDownloading = false;
+          this.selectedBook = null;
+        }
+      }
+    });
+
+    const bookComponent = {
+      props: ["book"],
+      data() {
+        return store;
+      },
+      template: `
+      <div class="cover my-4 w-48"><img class="rounded-md shadow-md" :src="book.coverUrl" /></div>
+      <div class="title  w-48 truncate" :title="book.title">{{book.title}}</div>
+      <div class="author w-48 truncate text-sm text-gray-700" :title="book.author">{{book.author}}</div>            
+      <div class="my-4">
+        <button 
+          type="button"
+          class="bg-blue-500 hover:bg-blue-600 h-9 py-2 w-48 text-white rounded shadow-md" 
+          :class="book.downloaded && 'bg-green-600'"
+          v-if="book!==selectedBook"
+          :disabled="isDownloading"
+          @click="downloadBook(book)">
+          <div class="inline-flex items-center">
+            <svg class="fill-current -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/></svg>
+            <span class="uppercase text-sm font-semibold">Download</span>
+          </div>
+        </button>
+        <span v-if="book===selectedBook" class="bg-blue-600 h-9 py-2 w-48 text-white rounded shadow-md" type="button">
+          <div class="inline-flex items-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="uppercase text-sm font-semibold">Downloading</span>
+          </div>
+        </span>
+      </div>
+      `
+    };
+
+    const booksPlaceholderComponent = {
+      template: `
+      <div class="books flex flex-wrap gap-4 justify-evenly sm:justify-start">
+        <div class="book text-center text-gray-300">
+          <div class="cover my-4 w-48">
+            <div class="rounded-md shadow-md bg-gray-200 h-64 flex flex-col justify-center text-center items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-28 w-28 stroke-gray-300" fill="none" viewBox="0 0 24 24" stroke-width="1.2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <div>Loading library</div>
+            </div>
+          </div>
+          <div class="my-5">
+            <div class="title bg-gray-100 my-3 h-3 w-48 rounded-full"></div>
+            <div class="author bg-gray-100 my-2 h-2 w-48 rounded-full"></div>
+          </div>
+          <span class="bg-gray-200 h-9 py-2 w-48 rounded shadow-md" type="button">
+            <div class="inline-flex items-center">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span class="uppercase text-sm font-semibold">Loading</span>
+            </div>
+          </span>
+        </div>
+      </div>
+      `
+    };
+
+    const booksComponent = {
+      components: {
+        book: bookComponent
+      },
+      async setup() {
+        await store.loadBooks();
+        return store;
+      },
+      template: `
+      <div class="books flex flex-wrap gap-4 justify-evenly sm:justify-start">
+        <div class="book text-center" v-for="book in books">
+          <book :book="book"></book>
+        </div>
+      </div>
+      `
+    };
+
+    const errorPlaceholderComponent = {
+      template: `
+        <div class="flex flex-col justify-center text-gray-400 text-center items-center">
+          <div class="my-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-28 w-28 stroke-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+            </svg>  
+          </div>
+          
+          <div>Something went wrong.</div>
+          <div class="text-sm">Refresh the page to try again</div>
+        </div>
+      `
+    }
+    const libraryComponent = {
+      components: {
+        books: booksComponent,
+        booksPlaceholder: booksPlaceholderComponent,
+        errorPlaceholder: errorPlaceholderComponent
+      },
+      data() {
+        return store;
+      },
+      template: `
+      <div class="flex flex-col">
+        <div class="error" v-if="isError">
+          <error-placeholder></error-placeholder>
+        </div>
+        <Suspense v-else>
+          <template #fallback>
+            <div class="loading" v-if="isLoading">
+              <books-placeholder></books-placeholder>
+            </div>
+          </template>
+          <template #default>
+            <books></books>
+          </template>
+        </Suspense>
+      </div>
+      `
+    };
+  
+    createApp(libraryComponent).mount("#app");
+
+  </script>
+</body>
+</html>

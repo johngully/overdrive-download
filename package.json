@@ -10,6 +10,7 @@
     "start": "node index.mjs",
     "test": "node tests/index.tests.mjs",
     "server": "node web/server.mjs",
+    "server-watch": "nodemon",
     "docker-build": "docker buildx build --platform linux/amd64,linux/arm64 -t johngully/overdrive-download -t johngully/overdrive-download:v$npm_package_version .",
     "docker-publish": "docker buildx build --platform linux/amd64,linux/arm64 -t johngully/overdrive-download -t johngully/overdrive-download:v$npm_package_version --push .",
     "docker-up": "docker-compose up -d",
@@ -26,6 +27,7 @@
     "axios": "^0.26.0",
     "chalk-template": "^0.4.0",
     "commander": "^9.0.0",
+    "connect-livereload": "^0.6.1",
     "convict": "^6.2.1",
     "convict-format-with-validator": "^6.2.0",
     "cors": "^2.8.5",
@@ -34,11 +36,15 @@
     "fs-extra": "^10.0.1",
     "globby": "^13.1.1",
     "junk": "^4.0.0",
+    "livereload": "^0.9.3",
     "log-symbols": "^5.1.0",
     "log-update": "^5.0.0",
     "node-id3": "^0.2.3",
     "puppeteer": "^13.4.1",
     "uuid": "^8.3.2",
     "xpath": "^0.0.32"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
   }
 }

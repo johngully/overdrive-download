@@ -54,6 +54,39 @@ export default class OdmDownload {
     return filePath;
   }
 
+  async getBooks() {
+    logger.debug(`OdmDownload.getBooks - started`);
+    const books = [];
+
+    // Initialize the browser
+    const page = await this._startBrowser();
+
+    // Login
+    const isLoggedIn = await this._login(this.config.username, this.config.password);
+    if (!isLoggedIn) {
+      throw new Error("Login failed", this.config)
+    }
+    logger.info(`Login to overdrive successfull`);
+
+    // Get the books on hold
+    const holdsUrl = `${this.config.url}/account/holds`
+    const booksOnHold = await this._getBooksFromPage(holdsUrl);
+    booksOnHold.forEach(book => book.onHold = true); // Mark each book as on hold
+
+    // Get the books on loan
+    const loansUrl = `${this.config.url}/account/loans`
+    const booksOnLoan = await this._getBooksFromPage(loansUrl);
+    booksOnLoan.forEach(book => book.onLoan = true); // Mark each book as on loan
+
+    // Merge the book lists
+    books.push(...booksOnHold, ...booksOnLoan);
+
+    await this._stopBrowser();
+    logger.verbose(`OdmDownload.getBooks - ${books.length} books available for download`);
+    logger.debug(`OdmDownload.getBooks - completed`);
+    return books;
+  }
+
   async _startBrowser() {
     logger.debug(`OdmDownload._startBrowser - started`);
     let headless = true;
@@ -199,6 +232,32 @@ export default class OdmDownload {
     return titleElement;
   }
 
+  async _getBooksFromPage(url) {
+    logger.debug(`OdmDownload._getBooksOnLoan - started`);
+    const books = [];
+    
+    // Navigate to the holds or loans page
+    await this.page.goto(url, this.pageConfig.goto);
+
+    // let booksQuery = `.title-details-container`;
+    let booksQuery = `li .audiobook`;
+    const bookElements = await this.page.$$(booksQuery);
+    if (!bookElements) {
+      return books;
+    }
+
+    // Add each book title and author to the list of books
+    for (let bookElement of bookElements) {
+      const title = await getElementPropertyValue(bookElement, ".title-name a");
+      const author = await getElementPropertyValue(bookElement, ".title-author a");
+      const coverUrl = await getElementPropertyValue(bookElement, ".CoverImageContainer img", "src");
+      books.push({ title, author, coverUrl });
+    }
+
+    logger.debug(`OdmDownload._getBooksOnLoan - completed`);
+    return books;
+  }
+
   async _downloadOdm(downloadButton) {
     logger.debug(`OdmDownload._downloadOdm - started`);
     // Configure the download response handler to catch responses from the library site
@@ -217,6 +276,17 @@ export default class OdmDownload {
     logger.debug(`OdmDownload._downloadOdm - completed`, downloadFileName);
     return downloadFileName;
   }
+}
+
+async function getElementPropertyValue(element, selector, property = "innerText") {
+  let selectedElement = element
+  if (selector) {
+    selectedElement = await element.$(selector);
+  }
+
+  const textProperty = await selectedElement.getProperty(property);
+  const textValue = await textProperty.jsonValue();
+  return textValue;
 }
 
 function sameUrl(url1, url2) {

@@ -1,0 +1,6 @@
+{
+  "verbose": true,
+  "ignore": ["test/*", "node_modules/*"],
+  "ext": "html,gif,jpg,js,json,mjs,png",
+  "exec": "npm run server"
+}
