@@ -5,13 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Overdrive Download</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script type="importmap">
-    {
-      "imports": {
-        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
-      }
-    }
-  </script>
+  <script src="https://unpkg.com/vue@3"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
@@ -19,15 +13,16 @@
     <div id="app"></div>
   </div>
   <script type="module">
-    import { createApp, reactive } from "vue";
+    const { createApp, reactive } = Vue;
 
     const sleep = m => new Promise(r => setTimeout(r, m))
-    const mockBooks = [
-      {"title":"The Old Man and the Sea", "author":"Ernest Hemingway", "coverUrl":"https://img1.od-cdn.com/ImageType-100/0439-1/%7B06943DC2-CEDE-474C-8736-583CB22AC260%7DImg100.jpg", "onHold":true},
-      {"title":"Little House in the Big Woods", "author":"Laura Ingalls Wilder", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0293-1%2F%257B8E616136-4AE4-4283-A363-359A90E295F9%257DImg100.jpg&stripmeta=true&width=150", "onHold":true},
-      {"title":"Argo", "author":"Antonio J. Mendez", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0887-1%2F%257BEACC3B52-1935-4289-8F33-BD3F57A25785%257DImg100.jpg&stripmeta=true&width=150", "onLoan":true},
-      {"title":"Death on the Nile", "author":"Agatha Christie", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0293-1%2F%257BA8A4231E-A0D7-4F6F-A1D2-CFBB20A5FFA0%257DImg100.jpg&stripmeta=true&width=150", "onLoan":true},
-    ];
+    // const mockBooks = [
+    //   {"title":"The Old Man and the Sea", "author":"Ernest Hemingway", "coverUrl":"https://img1.od-cdn.com/ImageType-100/0439-1/%7B06943DC2-CEDE-474C-8736-583CB22AC260%7DImg100.jpg", "onHold":true},
+    //   {"title":"Little House in the Big Woods", "author":"Laura Ingalls Wilder", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0293-1%2F%257B8E616136-4AE4-4283-A363-359A90E295F9%257DImg100.jpg&stripmeta=true&width=256", "onHold":true},
+    //   {"title":"Argo", "author":"Antonio J. Mendez", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0887-1%2F%257BEACC3B52-1935-4289-8F33-BD3F57A25785%257DImg100.jpg&stripmeta=true&width=256", "onLoan":true},
+    //   {"title":"Death on the Nile", "author":"Agatha Christie", "coverUrl":"https://ic.od-cdn.com/resize?type=auto&url=%2FImageType-100%2F0293-1%2F%257BA8A4231E-A0D7-4F6F-A1D2-CFBB20A5FFA0%257DImg100.jpg&stripmeta=true&width=256", "onLoan":true},
+    // ];
+    // localStorage.setItem("books", JSON.stringify(mockBooks));
 
     const store = reactive({
       status: null,
@@ -54,14 +49,19 @@
       async loadBooks() {
         try {
           this.isLoading = true;
-          // await sleep(500);
-          // const books = mockBooks;
-          const response = await fetch(`./books`);
-          const books = await response.json();
-          books.forEach(book => {
-            book.coverUrl = book.coverUrl.replace("&width=150", "&width=256");
-          });
-          this.books.push(...books);
+          // Attempt to get the books from the local storage cache
+          this.books = JSON.parse(localStorage.getItem("books"));
+
+          // If there are no cached books, load them from the server
+          if (!this.books) {
+            const response = await fetch(`./books`);
+            const books = await response.json();
+            books.forEach(book => {
+              book.coverUrl = book.coverUrl.replace("&width=150", "&width=256");
+            });
+            this.books = books;
+            localStorage.setItem("books", JSON.stringify(books));
+          }
         } catch(error) {
           this.isError = true;
         } finally {
@@ -156,6 +156,12 @@
         book: bookComponent
       },
       async setup() {
+        // If the page has been intentionally reloaded by the user
+        // assume that they are seeking to refresh the data.
+        // Clear the cached data, so that it will be loaded from the server.
+        if (performance.navigation.type == performance.navigation.TYPE_RELOAD) {
+          localStorage.removeItem("books");
+        }
         await store.loadBooks();
         return store;
       },
