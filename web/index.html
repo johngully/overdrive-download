@@ -5,8 +5,21 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Overdrive Download</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://unpkg.com/vue@3" crossorigin="anonymous"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          screens: {
+            "mobilehover": { 
+              "raw": "(hover: hover)" 
+            },
+          }
+        }
+      }
+    }
+  </script>
 </head>
 <body>
   <div class="container mx-auto">
@@ -98,7 +111,7 @@
       <div class="my-4">
         <button 
           type="button"
-          class="bg-blue-500 hover:bg-blue-600 h-11 py-3 w-full text-white rounded shadow-md" 
+          class="bg-blue-500 mobilehover:hover:bg-blue-600 h-11 py-3 w-full text-white rounded shadow-md" 
           :class="book.downloaded && 'bg-green-600'"
           v-if="book!==selectedBook"
           :disabled="isDownloading"
@@ -108,7 +121,7 @@
             <span class="uppercase text-sm font-semibold">Download</span>
           </div>
         </button>
-        <span v-if="book===selectedBook" class="bg-blue-600 h-11 py-3 w-full text-white rounded shadow-md" type="button">
+        <div v-if="book===selectedBook" class="bg-blue-600 h-11 py-3 w-full rounded shadow-md text-white">
           <div class="inline-flex items-center">
             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -116,7 +129,7 @@
             </svg>
             <span class="uppercase text-sm font-semibold">Downloading</span>
           </div>
-        </span>
+        </div>
       </div>
       `
     };
@@ -137,7 +150,7 @@
             <div class="title bg-gray-100 my-3 h-3 w-full rounded-full"></div>
             <div class="author bg-gray-100 my-2 h-2 w-full rounded-full"></div>
           </div>
-          <span class="bg-gray-200 h-9 py-2 w-full rounded shadow-md" type="button">
+          <div class="bg-gray-200 h-11 py-3 w-full rounded shadow-md">
             <div class="inline-flex items-center">
               <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -145,7 +158,7 @@
               </svg>
               <span class="uppercase text-sm font-semibold">Loading</span>
             </div>
-          </span>
+          </div>
         </div>
       </div>
       `
