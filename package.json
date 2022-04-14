@@ -15,7 +15,10 @@
     "docker-publish": "docker buildx build --platform linux/amd64,linux/arm64 -t johngully/overdrive-download -t johngully/overdrive-download:v$npm_package_version --push .",
     "docker-up": "docker-compose up -d",
     "docker-down": "docker-compose down --volumes",
-    "version": "npm version"
+    "version": "npm version",
+    "publish-patch": "npm version patch && git push --follow-tags",
+    "publish-minor": "npm version minor && git push --follow-tags",
+    "publish-major": "npm version major && git push --follow-tags"
   },
   "author": "John Gully",
   "license": "MIT",
