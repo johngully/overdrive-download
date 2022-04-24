@@ -105,10 +105,20 @@
         return store;
       },
       template: `
-      <div class="cover my-4 w-full"><img class="rounded-md shadow-md" :src="book.coverUrl" /></div>
+      <div class="cover relative my-4 w-full">
+        <img class="rounded-md shadow-md" :src="book.coverUrl" />
+        <div v-if="book.waitTime" class="absolute bottom-0 rounded-b-md py-1 w-full text-sm text-gray-500 bg-gray-200">{{book.waitTime}}</div>
+      </div>
       <div class="title  w-full truncate" :title="book.title">{{book.title}}</div>
       <div class="author w-full truncate text-sm text-gray-700" :title="book.author">{{book.author}}</div>            
-      <div class="my-4">
+      <div v-if="book.waitTime" class="my-4">
+        <div class="text-gray-400 bg-gray-200 h-11 py-3 w-full rounded shadow-md">
+            <div class="inline-flex items-center">
+              <span class="uppercase text-sm font-semibold">Waiting</span>
+            </div>
+          </div>
+      </div>
+      <div v-else class="my-4">
         <button 
           type="button"
           class="bg-blue-500 mobilehover:hover:bg-blue-600 h-11 py-3 w-full text-white rounded shadow-md" 

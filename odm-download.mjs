@@ -251,7 +251,8 @@ export default class OdmDownload {
       const title = await getElementPropertyValue(bookElement, ".title-name a");
       const author = await getElementPropertyValue(bookElement, ".title-author a");
       const coverUrl = await getElementPropertyValue(bookElement, ".CoverImageContainer img", "src");
-      books.push({ title, author, coverUrl });
+      const waitTime = await getElementPropertyValue(bookElement, ".waitingText");
+      books.push({ title, author, waitTime, coverUrl });
     }
 
     logger.debug(`OdmDownload._getBooksOnLoan - completed`);
@@ -282,6 +283,10 @@ async function getElementPropertyValue(element, selector, property = "innerText"
   let selectedElement = element
   if (selector) {
     selectedElement = await element.$(selector);
+  }
+
+  if (!selectedElement) {
+    return null;
   }
 
   const textProperty = await selectedElement.getProperty(property);
