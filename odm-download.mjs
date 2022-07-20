@@ -130,7 +130,9 @@ export default class OdmDownload {
 
     // Enter username & password
     await this.page.type("#username", username);
-    await this.page.type("#password", password);
+    if (password !== "") {
+       await this.page.type("#password", password);
+    }
     await this.page.click(".signin-button")
   
     // If the url is the base url, assume the login succeded
