@@ -46,6 +46,6 @@
     "xpath": "^0.0.32"
   },
   "devDependencies": {
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.19"
   }
 }
