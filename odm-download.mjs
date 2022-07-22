@@ -215,8 +215,11 @@ export default class OdmDownload {
     // Find the title element, use the title name if specified
     let titleQuery = `h3[title]`
     if (title) {
-      titleQuery = `h3[title="${title}" i]`; // The "i" at the end of the selector makes the query case insensitive
+      // Escape special characters in the book title. Added to address Issue #21 https://github.com/johngully/overdrive-download/issues/21
+      const escapedTitle = title.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, "\\$&"); 
+      titleQuery = `h3[title="${escapedTitle}" i]`; // The "i" at the end of the selector makes the query case insensitive
     }
+    logger.debug(`OdmDownload._getTitle - titleQuery: "${titleQuery}"`);
     
     // Get the title element and name
     const titleElement = await this.page.$(titleQuery);
