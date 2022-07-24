@@ -85,7 +85,7 @@
         try {
           this.isDownloading = true;
           this.selectedBook = book;
-          const response = await fetch(`./download?title=${book.title}`);
+          const response = await fetch(`./download?title=${encodeURIComponent(book.title)}`);
           const json = await response.json();
           book.downloaded = true;
           console.log("Download complete");
