@@ -41,6 +41,7 @@
       status: null,
       selectedBook: null,
       books: [],
+      booksDownloaded: [],
       get isError() {
         return this.status === "error";
       },
@@ -64,6 +65,7 @@
           this.isLoading = true;
           // Attempt to get the books from the local storage cache
           this.books = JSON.parse(localStorage.getItem("books"));
+          this.booksDownloaded = JSON.parse(localStorage.getItem("books-downloaded")) || [];
 
           // If there are no cached books, load them from the server
           if (!this.books) {
@@ -71,6 +73,7 @@
             const books = await response.json();
             books.forEach(book => {
               book.coverUrl = book.coverUrl.replace("&width=150", "&width=512");
+              book.downloaded = this.getCachedDownloadStatus(book);
             });
             this.books = books;
             localStorage.setItem("books", JSON.stringify(books));
@@ -88,6 +91,7 @@
           const response = await fetch(`./download?title=${encodeURIComponent(book.title)}`);
           const json = await response.json();
           book.downloaded = true;
+          this.cacheDownloadStatus(book);
           console.log("Download complete");
           console.log(json.book);
         } catch (error) {
@@ -96,6 +100,17 @@
           this.isDownloading = false;
           this.selectedBook = null;
         }
+      },
+      cacheDownloadStatus(book) {
+        if (book.downloaded) {
+          this.booksDownloaded.push(book.title);
+          localStorage.setItem("books-downloaded", JSON.stringify(this.booksDownloaded));
+        } else {
+          this.booksDownloaded.pop(book.title);
+        }
+      },
+      getCachedDownloadStatus(book) {
+        return !!this.booksDownloaded.find(title => title === book.title);
       }
     });
 
