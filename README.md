@@ -90,7 +90,7 @@ odm "The Old Man and the Sea" --verbose
 ```
 
 # Web Server
-This project includes a simple webserver that hosts a basic user interfact that can be used to perform basic operations remotely, without the need for SSH access to the terminal. 
+This project includes a simple webserver that hosts a basic user interface that can be used to perform basic operations remotely, without the need for SSH access to the terminal. 
 
 In addition to the code to run the server directly, the basics for a docker container have been included to simplify the entire process of running the server.
 
@@ -182,7 +182,7 @@ fs.rmSync(downloadResults.licensePath);
 ```
 
 # Configuration
-Configuration of the the library are stored in a `.overdrivedownloadsrc` file. The configuration values are stored in a `json` format and are persisted across uses. A [CLI command](#example-config-creation) `odm config` has been created to simplify the process of creating.
+Configuration of the the library are stored in a `.overdrivedownloadrc` file. The configuration values are stored in a `json` format and are persisted across uses. A [CLI command](#example-config-creation) `odm config` has been created to simplify the process of creating.
 
 > Running the `odm config` command additional times will update the config file with new values. Each execution of the command is additive, which means that you are not required to specify all the values every time.
 
