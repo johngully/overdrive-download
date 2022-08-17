@@ -6,6 +6,9 @@ import convictFormatWithValidator from "convict-format-with-validator";
 import modifiers from "./configuration.modifiers.mjs";
 
 const CONFIG_FILE_NAME = ".overdrivedownloadrc";
+const INTERNAL_SCHEMA_FILE_NAME = "./utils/configurationInternal.schema.json";
+const CONFIG_SCHEMA_FILE_NAME = "./utils/configuration.schema.json";
+const SERVER_SCHEMA_FILE_NAME = "./utils/configurationServer.schema.json";
 
 export default class Configuration {
   _customConfigFilePath = null;
@@ -31,7 +34,7 @@ export default class Configuration {
 
   load(configFilePath) {
     // Add the global config by default
-    const globalConfigPath = getGlobalConfigFilePath();
+    const globalConfigPath = getGlobalPathForFile(CONFIG_FILE_NAME);
     loadConfigFile(this.config, globalConfigPath);
     this.currentConfigFile = globalConfigPath;
 
@@ -73,9 +76,12 @@ export default class Configuration {
 
 function getSchemas() {
   // Consider using a pattern to find all the .schema files
-  const internalSchema = getJsonFromFile("./utils/configurationInternal.schema.json");
-  const configSchema = getJsonFromFile("./utils/configuration.schema.json");
-  const serverSchema = getJsonFromFile("./utils/configurationServer.schema.json");
+  const interenalSchemaFilePath = getGlobalPathForFile(INTERNAL_SCHEMA_FILE_NAME);
+  const configSchemaFilePath = getGlobalPathForFile(CONFIG_SCHEMA_FILE_NAME);
+  const serverSchemaFilePath = getGlobalPathForFile(SERVER_SCHEMA_FILE_NAME);
+  const internalSchema = getJsonFromFile(interenalSchemaFilePath);
+  const configSchema = getJsonFromFile(configSchemaFilePath);
+  const serverSchema = getJsonFromFile(serverSchemaFilePath);
 
   return {
     ...internalSchema,
@@ -97,13 +103,13 @@ function loadConfigFile(config, path) {
   return fileExists;
 }
 
-function getGlobalConfigFilePath() {
+function getGlobalPathForFile(relativeFilePath) {
   // Get the path the config file in the package installation location.
   // This is needed if the user is executing the code from another location,
   // such as through the CLI.
   const __dirname = path.dirname(new URL(".", import.meta.url).pathname);
-  const globalConfigFilePath = path.join(__dirname, CONFIG_FILE_NAME);
-  return globalConfigFilePath;
+  const globalFilePath = path.join(__dirname, relativeFilePath);
+  return globalFilePath;
 }
 
 function getJsonFromFile(schemaPath) {
